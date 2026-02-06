@@ -1,27 +1,48 @@
 # fuzzy-potato
 Group project repository: Elsie, Emily
 
-What dataset are you going to use?
-https://data.cityofnewyork.us/Environment/Drinking-Water-Quality-Distribution-Monitoring-Dat/bkwf-xfky/about_data
-What are your research question(s)?
+Project 1 Part 1: Proposal
+Group fuzzy-potato: Emily Chu, Elsie Zhang
+
+1. Dataset
+Name: Drinking Water Quality Distribution Monitoring Data
+
+The data tables summarize the turbidity values, coliform, fluoride and chlorine found at sides in distribution each month.
+
+2. Research Questions
+How do turbidity levels vary across time (seasonality and long-term trends) in NYC drinking water?
+
 Are turbidity levels in drinking water samples in New York City associated with precipitation?
-What's the link to your notebook?
+
+Is there spatial variation in water quality indicators across sampling locations in NYC?
+
+3. Notebook Link
+4. Target Visualization
 
 
-What's your target visualization?
-Include a picture.
 
+5. Known Unknowns
+known: 
 
-What are your known unknowns?
-Known: 
-Turbidity Measurements
-Location & Date of sampling
-Other water quality indicators
-Unknown:
-Precipitation measurements at the exact location and date
+Turbidity measurements across monitoring sites in NYC drinking water distribution system
 
+Location and date of sampling, allowing for temporal and spatial analysis
 
-What challenges do you anticipate?
+Other water quality indicators (e.g., chlorine residual, fluoride, and coliform levels)
+
+Monthly monitoring structure, which allows trend and seasonal pattern analysis
+
+unknown: 
+
+Precipitation measurements corresponding to the exact sampling locations and time periods
+
+Potential missing data or incomplete coverage in turbidity measurements (e.g., some sites/months not sampled), which may affect comparisons over time
+
+Whether precipitation affects turbidity immediately or with a lag effect
+
+6. Anticipated Challenges
 Merging two different datasets together as precipitation data may have different date and location formats compared to the water quality data.
+
 Choosing the correct rainfall time window as it is unclear whether turbidity responds to same-day rainfall or previous 24-48 hours.
+
 Limited variation in turbidity due to well-controlled drinking water system, as it would be harder to detect statistically significant associations.
