@@ -17,6 +17,9 @@ Are turbidity levels in drinking water samples in New York City associated with 
 Is there spatial variation in water quality indicators across sampling locations in NYC?
 
 3. Notebook Link
+<a target="_blank" href="https://colab.research.google.com/github/advanced-computing/fuzzy-potato/blob/main/GroupProject.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
 4. Target Visualization
 
 
