@@ -1,0 +1,8 @@
+ipykernel
+pandas
+plotly
+nbformat
+statsmodels
+matplotlib
+
+jupyter-book==1.*
