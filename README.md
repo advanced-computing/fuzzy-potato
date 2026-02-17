@@ -5,6 +5,7 @@ Project 1 Part 1: Proposal
 Group fuzzy-potato: Emily Chu, Elsie Zhang
 
 1. Dataset
+
 Name: [Civilian Complaint Review Board: Allegations Against Police Officers](https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Allegations-Agains/6xgr-kwjq/about_data)
 
 The dataset contains detailed records of civilian allegations of misconduct against NYPD officers, which includes allegation type, officer information, victim demographics, and investigation outcomes. We can use this dataset to conduct an analysis on the patterns and track accountability in police misconduct.
@@ -12,14 +13,19 @@ The dataset contains detailed records of civilian allegations of misconduct agai
 2. Research Questions
 How do police misconduct allegations vary across NYPD commands and over time in New York City?
 
+What types of charges are predominant in different police units, and have these types changed over time?
+
 Are NYPD precincts with higher crime levels associated with higher numbers of police misconduct allegations?
 
 3. Notebook Link
+<a target="_blank" href="https://colab.research.google.com/github/advanced-computing/fuzzy-potato/blob/main/GroupProject.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 4. Target Visualization
-
-
-
+To be updated
 5. Known Unknowns
+
 Known: 
 
 Number of misconduct allegations that allows us to measure variation in allegation frequency
