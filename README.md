@@ -6,19 +6,14 @@ Group fuzzy-potato: Emily Chu, Elsie Zhang
 
 1. Dataset
 
-Name: Air Quality Data - Updated Hourly
-This website provides global air quality data updated hourly on the pollutants of PM2.5, PM10, O3 (Ozone), NO2 (Nitrogen dioxide), SO2 (Sulfur dioxide), CO (Carbon monoxide)
+Name: [Civilian Complaint Review Board: Allegations Against Police Officers](https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Allegations-Agains/6xgr-kwjq/about_data)
+
+The dataset contains detailed records of civilian allegations of misconduct against NYPD officers, which includes allegation type, officer information, victim demographics, and investigation outcomes. We can use this dataset to conduct an analysis on the patterns and track accountability in police misconduct.
 
 2. Research Questions
+How do police misconduct allegations vary across NYPD commands and over time in New York City?
 
-How do hourly air pollution patterns (PM₂.₅, NO₂, O₃) vary across major cities, and when do cities experience statistically significant spikes relative to their typical baseline?
-We will focus on 6 major cities that allows us to have strong diversity for meaningful comparison across the globe
-NYC
-London
-Hong Kong
-Delhi
-São Paulo
-Tokyo
+Are NYPD precincts with higher crime levels associated with higher numbers of police misconduct allegations?
 
 3. Notebook Link
 <a target="_blank" href="https://colab.research.google.com/github/advanced-computing/fuzzy-potato/blob/main/GroupProject.ipynb">
@@ -29,21 +24,27 @@ Tokyo
 To be updated
 5. Known Unknowns
 
-Known:
-Timestamped hourly pollutant readings for (PM2.5, NO2, O3), which allows us to conduct pattern analysis and produce day-of week comparisons, spike detection, and form rolling averages
-All pollutants share the same measurement of µg/m³
-Geographic coordinates, which allows us to monitor stations for cross-city comparisons, spatial clustering, and mapping in Streamlit
-Clearly specified pollutant types allows us to compare traffic-related and climate-related patterns
-Real-time data enables a live dashboard for trend and monitoring applications in our application development
+Known: 
 
-Unknown:
-Data Quality may vary as OpenAQ aggregates from multiple providers, such as government monitors, low-cost sensors, and private contributors. We are unsure if all monitors are calibrated equally, which may reflect monitoring quality difference when using the data for cross-city comparisons
-Station placement bias because the stations are not randomly distributed, as they may be placed near highways, industrial zones, residential areas, etc. that may not represent the entire city fairly. This affects spike interpretation and baseline calculation. We may need to consider pulling data from multiple locations within a city with city-level aggregates, using median values and standard deviations to make the cities more comparable
-The definition of spike needs to be constructed
-No direct causal variables of traffic counts, weather (temperature and wind), policy changes, industrial output, wildfire data. We may need another set of data(s) to identify the direct causes
+Number of misconduct allegations that allows us to measure variation in allegation frequency
+
+NYPD command associated with each allegation enables the comparison of misconduct allegations across different commands
+
+Dates of each allegations to analyze trends over time
+
+Type of misconduct, which we use to analyze whether certain commands have more serious types of allegations
+
+Unknown: 
+
+Number of officers in each command, which would be hard for us to calculate allegation rates per officer
+
+Policing activity levels and crime rates for each precinct that limits the ability to interpret why some commands have more allegations
+
+External factors that influence allegations, such as crime levels, neighborhood characteristics, and population served
 
 6. Anticipated Challenges
+Data cleaning and standardization, as there are different naming formats withiin the data that causes inaccurate counts and inconsistencies of data formatting
 
-Making sure the time stamps are consistent across the data and making sure the time zones are correct
-Computing the baseline and spikes correctly, by using city-level hourly aggregation, rolling baseline, and rolling variability estimates. This requires computing the z-score or robust z-score
-Need to code to log data pull times and timestamps of a specific time to produce live data on our application
+Data aggregation and interpretation, as multiple allegations may come from the same complaint while each row represents an allegation that affects interpretation
+
+Large dataset size that may cause dashboard loading and filtering to be slow. We might need to pre-aggregate data before visualization through filtering the data
