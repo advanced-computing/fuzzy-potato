@@ -4,5 +4,6 @@ plotly
 nbformat
 statsmodels
 matplotlib
+python-dotenv
 
 jupyter-book==1.*
