@@ -5,16 +5,14 @@ Project 1 Part 1: Proposal
 Group fuzzy-potato: Emily Chu, Elsie Zhang
 
 1. Dataset
-Name: Drinking Water Quality Distribution Monitoring Data
+Name: [Civilian Complaint Review Board: Allegations Against Police Officers](https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Allegations-Agains/6xgr-kwjq/about_data)
 
-The data tables summarize the turbidity values, coliform, fluoride and chlorine found at sides in distribution each month.
+The dataset contains detailed records of civilian allegations of misconduct against NYPD officers, which includes allegation type, officer information, victim demographics, and investigation outcomes. We can use this dataset to conduct an analysis on the patterns and track accountability in police misconduct.
 
 2. Research Questions
-How do turbidity levels vary across time (seasonality and long-term trends) in NYC drinking water?
+How do police misconduct allegations vary across NYPD commands and over time in New York City?
 
-Are turbidity levels in drinking water samples in New York City associated with precipitation?
-
-Is there spatial variation in water quality indicators across sampling locations in NYC?
+Are NYPD precincts with higher crime levels associated with higher numbers of police misconduct allegations?
 
 3. Notebook Link
 4. Target Visualization
@@ -22,27 +20,27 @@ Is there spatial variation in water quality indicators across sampling locations
 
 
 5. Known Unknowns
-known: 
+Known: 
 
-Turbidity measurements across monitoring sites in NYC drinking water distribution system
+Number of misconduct allegations that allows us to measure variation in allegation frequency
 
-Location and date of sampling, allowing for temporal and spatial analysis
+NYPD command associated with each allegation enables the comparison of misconduct allegations across different commands
 
-Other water quality indicators (e.g., chlorine residual, fluoride, and coliform levels)
+Dates of each allegations to analyze trends over time
 
-Monthly monitoring structure, which allows trend and seasonal pattern analysis
+Type of misconduct, which we use to analyze whether certain commands have more serious types of allegations
 
-unknown: 
+Unknown: 
 
-Precipitation measurements corresponding to the exact sampling locations and time periods
+Number of officers in each command, which would be hard for us to calculate allegation rates per officer
 
-Potential missing data or incomplete coverage in turbidity measurements (e.g., some sites/months not sampled), which may affect comparisons over time
+Policing activity levels and crime rates for each precinct that limits the ability to interpret why some commands have more allegations
 
-Whether precipitation affects turbidity immediately or with a lag effect
+External factors that influence allegations, such as crime levels, neighborhood characteristics, and population served
 
 6. Anticipated Challenges
-Merging two different datasets together as precipitation data may have different date and location formats compared to the water quality data.
+Data cleaning and standardization, as there are different naming formats withiin the data that causes inaccurate counts and inconsistencies of data formatting
 
-Choosing the correct rainfall time window as it is unclear whether turbidity responds to same-day rainfall or previous 24-48 hours.
+Data aggregation and interpretation, as multiple allegations may come from the same complaint while each row represents an allegation that affects interpretation
 
-Limited variation in turbidity due to well-controlled drinking water system, as it would be harder to detect statistically significant associations.
+Large dataset size that may cause dashboard loading and filtering to be slow. We might need to pre-aggregate data before visualization through filtering the data
