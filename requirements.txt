@@ -4,5 +4,5 @@ plotly
 nbformat
 statsmodels
 matplotlib
-
+streamlit
 jupyter-book==1.*
