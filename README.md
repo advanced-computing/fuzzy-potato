@@ -13,6 +13,8 @@ The dataset contains detailed records of civilian allegations of misconduct agai
 2. Research Questions
 How do police misconduct allegations vary across NYPD commands and over time in New York City?
 
+What types of charges are predominant in different police units, and have these types changed over time?
+
 Are NYPD precincts with higher crime levels associated with higher numbers of police misconduct allegations?
 
 3. Notebook Link
