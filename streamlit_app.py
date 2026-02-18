@@ -12,6 +12,10 @@ st.set_page_config(page_title="NYC OpenData – Allegations Over Time", layout="
 st.title("Part 2 Streamlit App")
 st.write("Team: Emily Chu, Elsie Zhang")  # <-- change names if needed
 
+# page 2
+st.markdown("# Dataset 2: NYPD Complaint Data Historic")
+st.sidebar.markdown("# Dataset 2: NYPD Complaint Data Historic")
+
 DATASET1_BASE = "https://data.cityofnewyork.us/resource/6xgr-kwjq.json"
 
 
@@ -32,13 +36,17 @@ with st.spinner("Loading a small preview to detect columns..."):
 st.subheader("Choose columns")
 
 # Detect likely date columns
-date_candidates = [c for c in df_preview.columns if "date" in c.lower() or "time" in c.lower()]
+date_candidates = [
+    c for c in df_preview.columns if "date" in c.lower() or "time" in c.lower()
+]
 if not date_candidates:
     date_candidates = list(df_preview.columns)
 
 # Detect likely police unit columns
 unit_keywords = ["command", "precinct", "pct", "boro", "borough", "unit"]
-unit_candidates = [c for c in df_preview.columns if any(k in c.lower() for k in unit_keywords)]
+unit_candidates = [
+    c for c in df_preview.columns if any(k in c.lower() for k in unit_keywords)
+]
 if not unit_candidates:
     unit_candidates = list(df_preview.columns)
 
@@ -47,15 +55,23 @@ unit_col = st.selectbox("Choose a POLICE UNIT column", options=unit_candidates)
 
 limit = st.slider("Rows to fetch (ordered by date ASC)", 2000, 50000, 15000, step=1000)
 
-use_filter = st.checkbox("Filter to incidents after a given date (recommended)", value=True)
-start_date = st.date_input("Start date", value=pd.to_datetime("2016-01-01").date()) if use_filter else None
+use_filter = st.checkbox(
+    "Filter to incidents after a given date (recommended)", value=True
+)
+start_date = (
+    st.date_input("Start date", value=pd.to_datetime("2016-01-01").date())
+    if use_filter
+    else None
+)
 
 
 # -------------------------
 # 2) Load ordered data (KEY FIX: requests params auto-encode spaces)
 # -------------------------
 @st.cache_data(show_spinner=False)
-def load_ordered_data(date_column: str, unit_column: str, n_rows: int, start_date_str: str | None) -> pd.DataFrame:
+def load_ordered_data(
+    date_column: str, unit_column: str, n_rows: int, start_date_str: str | None
+) -> pd.DataFrame:
     # Build SoQL params safely
     params = {
         "$select": f"{date_column},{unit_column}",
@@ -67,7 +83,9 @@ def load_ordered_data(date_column: str, unit_column: str, n_rows: int, start_dat
     # Optional: filter by start date
     if start_date_str:
         # Combine conditions
-        params["$where"] = f"{date_column} IS NOT NULL AND {date_column} >= '{start_date_str}'"
+        params["$where"] = (
+            f"{date_column} IS NOT NULL AND {date_column} >= '{start_date_str}'"
+        )
 
     r = requests.get(DATASET1_BASE, params=params, timeout=60)
     r.raise_for_status()
@@ -106,9 +124,7 @@ else:
 
 # Aggregate counts
 counts = (
-    tmp.groupby(["time_bucket", unit_col])
-       .size()
-       .reset_index(name="allegation_count")
+    tmp.groupby(["time_bucket", unit_col]).size().reset_index(name="allegation_count")
 )
 
 # Debug checks
@@ -124,10 +140,10 @@ with c3:
 # Keep only top K units overall
 top_units = (
     counts.groupby(unit_col)["allegation_count"]
-          .sum()
-          .sort_values(ascending=False)
-          .head(top_k)
-          .index
+    .sum()
+    .sort_values(ascending=False)
+    .head(top_k)
+    .index
 )
 counts = counts[counts[unit_col].isin(top_units)].copy()
 counts = counts.sort_values("time_bucket")
