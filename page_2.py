@@ -1,164 +1,123 @@
+# page_2.py
 import streamlit as st
 import requests
 import pandas as pd
 import plotly.express as px
 
-st.markdown("# Dataset 1: NYC OpenData – Allegations Over Time", layout="wide")
-st.title("Part 2 Streamlit App")
-st.sidebar.markdown("# Dataset 1: NYC OpenData – Allegations Over Time")
+st.markdown("# Dataset 1: NYC OpenData – Complaints by Community")
+st.sidebar.markdown("# Dataset 1: Complaints by Community")
 
 DATASET1_BASE = "https://data.cityofnewyork.us/resource/6xgr-kwjq.json"
 
-
 # -------------------------
-# 1) Load a small preview to detect columns
+# Helpers
 # -------------------------
 @st.cache_data(show_spinner=False)
 def load_preview(n_rows: int = 2000) -> pd.DataFrame:
+    """Load a small sample to detect available columns."""
     params = {"$limit": n_rows}
     r = requests.get(DATASET1_BASE, params=params, timeout=30)
     r.raise_for_status()
     return pd.DataFrame(r.json())
 
-
-with st.spinner("Loading a small preview to detect columns..."):
-    df_preview = load_preview(2000)
-
-st.subheader("Choose columns")
-
-# Detect likely date columns
-date_candidates = [
-    c for c in df_preview.columns if "date" in c.lower() or "time" in c.lower()
-]
-if not date_candidates:
-    date_candidates = list(df_preview.columns)
-
-# Detect likely police unit columns
-unit_keywords = ["command", "precinct", "pct", "boro", "borough", "unit"]
-unit_candidates = [
-    c for c in df_preview.columns if any(k in c.lower() for k in unit_keywords)
-]
-if not unit_candidates:
-    unit_candidates = list(df_preview.columns)
-
-date_col = st.selectbox("Choose a DATE column", options=date_candidates)
-unit_col = st.selectbox("Choose a POLICE UNIT column", options=unit_candidates)
-
-limit = st.slider("Rows to fetch (ordered by date ASC)", 2000, 50000, 15000, step=1000)
-
-use_filter = st.checkbox(
-    "Filter to incidents after a given date (recommended)", value=True
-)
-start_date = (
-    st.date_input("Start date", value=pd.to_datetime("2016-01-01").date())
-    if use_filter
-    else None
-)
-
-
-# -------------------------
-# 2) Load ordered data (KEY FIX: requests params auto-encode spaces)
-# -------------------------
 @st.cache_data(show_spinner=False)
-def load_ordered_data(
-    date_column: str, unit_column: str, n_rows: int, start_date_str: str | None
-) -> pd.DataFrame:
-    # Build SoQL params safely
+def fetch_group_counts(group_col: str, top_n: int) -> pd.DataFrame:
+    """
+    Server-side aggregation:
+    SELECT group_col, count(*) as complaint_count
+    WHERE group_col is not null
+    GROUP BY group_col
+    ORDER BY complaint_count desc
+    LIMIT top_n
+    """
     params = {
-        "$select": f"{date_column},{unit_column}",
-        "$where": f"{date_column} IS NOT NULL",
-        "$order": f"{date_column} ASC",
-        "$limit": n_rows,
+        "$select": f"{group_col}, count(*) as complaint_count",
+        "$where": f"{group_col} IS NOT NULL",
+        "$group": group_col,
+        "$order": "complaint_count DESC",
+        "$limit": top_n,
     }
-
-    # Optional: filter by start date
-    if start_date_str:
-        # Combine conditions
-        params["$where"] = (
-            f"{date_column} IS NOT NULL AND {date_column} >= '{start_date_str}'"
-        )
-
     r = requests.get(DATASET1_BASE, params=params, timeout=60)
     r.raise_for_status()
-    return pd.DataFrame(r.json())
+    df = pd.DataFrame(r.json())
 
+    # Ensure numeric
+    if "complaint_count" in df.columns:
+        df["complaint_count"] = pd.to_numeric(df["complaint_count"], errors="coerce")
 
-start_date_str = str(start_date) if use_filter else None
-
-with st.spinner("Loading ordered data from NYC OpenData..."):
-    df = load_ordered_data(date_col, unit_col, limit, start_date_str)
-
-st.subheader("Dataset preview (ordered sample)")
-st.write(f"Rows: {len(df):,} | Columns: {list(df.columns)}")
-st.dataframe(df.head(30), use_container_width=True)
-
+    return df
 
 # -------------------------
-# 3) Build time buckets and aggregate counts
+# UI
 # -------------------------
-st.subheader("Line chart: Allegations Over Time by Police Unit (Figure 2 style)")
-
-granularity = st.selectbox("Time granularity", ["Year", "Month"], index=0)
-top_k = st.slider("Show top K units (by total allegations)", 3, 15, 8)
-
-tmp = df[[date_col, unit_col]].dropna().copy()
-
-# Convert date column to datetime
-tmp[date_col] = pd.to_datetime(tmp[date_col], errors="coerce")
-tmp = tmp.dropna(subset=[date_col])
-
-# Create time buckets
-if granularity == "Year":
-    tmp["time_bucket"] = tmp[date_col].dt.year.astype("Int64").astype(str)
-else:
-    tmp["time_bucket"] = tmp[date_col].dt.to_period("M").astype(str)
-
-# Aggregate counts
-counts = (
-    tmp.groupby(["time_bucket", unit_col]).size().reset_index(name="allegation_count")
+st.write(
+    "This page pulls data from NYC OpenData and shows a bar chart of complaint counts by a selected community-like field."
 )
 
-# Debug checks
-st.caption("Debug checks (to ensure multiple time points):")
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.write("Min date:", tmp[date_col].min())
-with c2:
-    st.write("Max date:", tmp[date_col].max())
-with c3:
-    st.write("Unique time buckets:", tmp["time_bucket"].nunique())
+with st.spinner("Loading preview to detect columns..."):
+    df_preview = load_preview(2000)
 
-# Keep only top K units overall
-top_units = (
-    counts.groupby(unit_col)["allegation_count"]
-    .sum()
-    .sort_values(ascending=False)
-    .head(top_k)
-    .index
+if df_preview.empty:
+    st.error("Preview returned no data. The dataset endpoint may be unavailable right now.")
+    st.stop()
+
+st.subheader("1) Choose a 'community' column")
+
+# Try to guess "community" fields; if none match, let user pick anything
+community_keywords = [
+    "community", "board", "district", "neighborhood", "neighbourhood",
+    "boro", "borough", "precinct", "pct", "command", "zip"
+]
+candidates = [
+    c for c in df_preview.columns
+    if any(k in c.lower() for k in community_keywords)
+]
+if not candidates:
+    candidates = list(df_preview.columns)
+
+default_idx = 0
+for i, c in enumerate(candidates):
+    if "community" in c.lower():
+        default_idx = i
+        break
+
+community_col = st.selectbox(
+    "Pick a column to represent 'community / area / unit'",
+    options=candidates,
+    index=default_idx if candidates else 0,
 )
-counts = counts[counts[unit_col].isin(top_units)].copy()
-counts = counts.sort_values("time_bucket")
 
-if counts["time_bucket"].nunique() < 2:
-    st.warning(
-        "Not enough time points to draw lines (only 1 time bucket). "
-        "Try increasing rows, using an earlier start date, or selecting a different DATE column."
-    )
-else:
-    fig = px.line(
-        counts,
-        x="time_bucket",
-        y="allegation_count",
-        color=unit_col,
-        markers=True,
-        title="Allegations Over Time by Police Unit",
-    )
-    fig.update_layout(
-        xaxis_title="Time",
-        yaxis_title="Number of Allegations",
-        legend_title="Police Unit",
-    )
-    st.plotly_chart(fig, use_container_width=True)
+top_n = st.slider("Show top N communities", min_value=5, max_value=50, value=20, step=5)
+
+st.subheader("2) Bar chart: Complaint counts by community")
+
+with st.spinner("Aggregating counts from NYC OpenData (server-side)..."):
+    try:
+        counts = fetch_group_counts(community_col, top_n)
+    except requests.HTTPError as e:
+        st.error(
+            "NYC OpenData request failed. This often happens if the chosen column "
+            "cannot be grouped (or the API rejects the query). Try a different column."
+        )
+        st.exception(e)
+        st.stop()
+
+if counts.empty or community_col not in counts.columns:
+    st.warning("No results returned. Try a different column.")
+    st.stop()
+
+# Clean labels
+counts = counts.dropna(subset=[community_col]).copy()
+counts[community_col] = counts[community_col].astype(str)
+
+fig = px.bar(
+    counts,
+    x=community_col,
+    y="complaint_count",
+    title=f"Complaint count by {community_col} (Top {top_n})",
+)
+fig.update_layout(xaxis_title=community_col, yaxis_title="Complaint count")
+st.plotly_chart(fig, use_container_width=True)
 
 with st.expander("See aggregated table"):
     st.dataframe(counts, use_container_width=True)
