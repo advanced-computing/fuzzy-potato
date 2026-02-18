@@ -1,4 +1,202 @@
+# page_3.py
 import streamlit as st
+import requests
+import pandas as pd
+import plotly.express as px
+from datetime import date
 
 st.markdown("# Dataset 2: NYPD Complaint Data Historic")
 st.sidebar.markdown("# Dataset 2: NYPD Complaint Data Historic")
+
+DATASET2_BASE = "https://data.cityofnewyork.us/resource/qgea-i56i.json"
+
+
+# -------------------------
+# Helpers
+# -------------------------
+@st.cache_data(show_spinner=False)
+def load_preview(n_rows: int = 2000) -> pd.DataFrame:
+    """Load a small sample to detect available columns."""
+    params = {"$limit": n_rows}
+    r = requests.get(DATASET2_BASE, params=params, timeout=30)
+    r.raise_for_status()
+    return pd.DataFrame(r.json())
+
+
+@st.cache_data(show_spinner=False)
+def fetch_group_counts(
+    group_col: str,
+    top_n: int,
+    start_dt: str | None = None,
+    end_dt: str | None = None,
+    boro: str | None = None,
+    law_cat: str | None = None,
+) -> pd.DataFrame:
+    """
+    Server-side aggregation:
+    SELECT group_col, count(*) as crime_count
+    WHERE group_col is not null (+ optional filters)
+    GROUP BY group_col
+    ORDER BY crime_count desc
+    LIMIT top_n
+    """
+    where = [f"{group_col} IS NOT NULL"]
+
+    # Date filter uses RPT_DT (report date). Socrata expects ISO timestamps.
+    if start_dt:
+        where.append(f"rpt_dt >= '{start_dt}T00:00:00.000'")
+    if end_dt:
+        where.append(f"rpt_dt < '{end_dt}T00:00:00.000'")
+
+    if boro and boro != "All":
+        where.append(f"boro_nm = '{boro}'")
+
+    if law_cat and law_cat != "All":
+        where.append(f"law_cat_cd = '{law_cat}'")
+
+    params = {
+        "$select": f"{group_col}, count(*) as crime_count",
+        "$where": " AND ".join(where),
+        "$group": group_col,
+        "$order": "crime_count DESC",
+        "$limit": top_n,
+    }
+
+    r = requests.get(DATASET2_BASE, params=params, timeout=60)
+    r.raise_for_status()
+    df = pd.DataFrame(r.json())
+
+    # Ensure numeric
+    if "crime_count" in df.columns:
+        df["crime_count"] = pd.to_numeric(df["crime_count"], errors="coerce")
+
+    return df
+
+
+# -------------------------
+# UI
+# -------------------------
+st.write(
+    "This page pulls from NYC OpenData and shows a bar chart of crime counts by precinct."
+)
+
+with st.spinner("Loading preview to detect columns..."):
+    df_preview = load_preview(2000)
+
+if df_preview.empty:
+    st.error(
+        "Preview returned no data. The dataset endpoint may be unavailable right now."
+    )
+    st.stop()
+
+# Sidebar filters
+st.sidebar.subheader("Filters (optional)")
+
+# keep defaults modest; this dataset is huge
+default_start = date(2019, 1, 1)
+default_end = date(2020, 1, 1)
+
+start_date = st.sidebar.date_input("Start date (RPT_DT)", value=default_start)
+end_date = st.sidebar.date_input("End date (exclusive)", value=default_end)
+
+boro = st.sidebar.selectbox(
+    "BORO_NM",
+    options=["All", "BRONX", "BROOKLYN", "MANHATTAN", "QUEENS", "STATEN ISLAND"],
+    index=0,
+)
+
+law_cat = st.sidebar.selectbox(
+    "LAW_CAT_CD",
+    options=["All", "FELONY", "MISDEMEANOR", "VIOLATION"],
+    index=0,
+)
+
+st.subheader("1) Choose a precinct")
+
+# Suggest “area/unit” columns similar to Dataset 1 logic
+community_keywords = [
+    "pct",
+    "precinct",
+    "addr_pct_cd",
+    "boro",
+    "borough",
+    "law_cat",
+    "ofns",
+    "pd_desc",
+]
+candidates = [
+    c for c in df_preview.columns if any(k in c.lower() for k in community_keywords)
+]
+if not candidates:
+    candidates = list(df_preview.columns)
+
+# Prefer precinct if present
+default_idx = 0
+for i, c in enumerate(candidates):
+    if c.lower() == "addr_pct_cd":
+        default_idx = i
+        break
+
+group_col = st.selectbox(
+    "Pick a column to group by",
+    options=candidates,
+    index=default_idx if candidates else 0,
+)
+
+top_n = st.slider("Show top N groups", min_value=5, max_value=50, value=20, step=5)
+
+st.subheader("2) Bar chart: Crime counts by selected group")
+
+with st.spinner("Aggregating counts from NYC OpenData (server-side)..."):
+    try:
+        counts = fetch_group_counts(
+            group_col=group_col,
+            top_n=top_n,
+            start_dt=start_date.strftime("%Y-%m-%d") if start_date else None,
+            end_dt=end_date.strftime("%Y-%m-%d") if end_date else None,
+            boro=None if boro == "All" else boro,
+            law_cat=None if law_cat == "All" else law_cat,
+        )
+    except requests.HTTPError as e:
+        st.error(
+            "NYC OpenData request failed. This can happen if the chosen column "
+            "cannot be grouped (or the API rejects the query). Try a different column."
+        )
+        st.exception(e)
+        st.stop()
+
+if counts.empty or group_col not in counts.columns:
+    st.warning(
+        "No results returned. Try a different grouping column or widen your date range."
+    )
+    st.stop()
+
+# Clean labels
+counts = counts.dropna(subset=[group_col]).copy()
+counts[group_col] = counts[group_col].astype(str)
+
+title = (
+    f"Crime count by {group_col} (Top {top_n})"
+    f" | {start_date} to {end_date}"
+    + ("" if boro == "All" else f" | {boro}")
+    + ("" if law_cat == "All" else f" | {law_cat}")
+)
+
+fig = px.bar(
+    counts,
+    x=group_col,
+    y="crime_count",
+    title=title,
+)
+fig.update_layout(xaxis_title=group_col, yaxis_title="crime_count")
+st.plotly_chart(fig, use_container_width=True)
+
+with st.expander("See aggregated table"):
+    st.dataframe(counts, use_container_width=True)
+
+# Show the exact columns to merge on later
+st.info(
+    "For your research question, the key precinct column in Dataset 2 is **`addr_pct_cd`**. "
+    "Aggregate to **crime_count by addr_pct_cd**, then merge with Dataset 1’s **misconduct_count by precinct** "
+    "using `precinct`/`addr_pct_cd` (make sure both are numeric or both are strings)."
+)
