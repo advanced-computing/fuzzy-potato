@@ -4,6 +4,7 @@ plotly
 nbformat
 statsmodels
 matplotlib
-streamlit==1.19.0
-altair==4.2.2
+python-dotenv
+streamlit>=1.30
+altair>=5
 jupyter-book==1.*
