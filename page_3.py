@@ -14,6 +14,18 @@ DATASET2_BASE = "https://data.cityofnewyork.us/resource/qgea-i56i.json"
 # -------------------------
 # Helpers
 # -------------------------
+
+# Human-readable names for columns
+COLUMN_LABELS = {
+    "addr_pct_cd": "Precinct",
+    "boro_nm": "Borough",
+    "patrol_boro": "Patrol Borough",
+    "law_cat_cd": "Offense Level (Felony/Misdemeanor/Violation)",
+    "ofns_desc": "Offense Description",
+    "pd_desc": "Detailed Offense Description",
+}
+
+
 @st.cache_data(show_spinner=False)
 def load_preview(n_rows: int = 2000) -> pd.DataFrame:
     """Load a small sample to detect available columns."""
@@ -111,7 +123,7 @@ law_cat = st.sidebar.selectbox(
     index=0,
 )
 
-st.subheader("1) Choose a precinct")
+st.subheader("1) Choose a crime count to group by")
 
 # Suggest “area/unit” columns similar to Dataset 1 logic
 community_keywords = [
@@ -137,11 +149,19 @@ for i, c in enumerate(candidates):
         default_idx = i
         break
 
-group_col = st.selectbox(
+# Convert API names to readable names
+friendly_options = {COLUMN_LABELS.get(col, col): col for col in candidates}
+
+friendly_names = list(friendly_options.keys())
+
+group_col_label = st.selectbox(
     "Pick a column to group by",
-    options=candidates,
+    options=friendly_names,
     index=default_idx if candidates else 0,
 )
+
+# Convert back to API name for querying
+group_col = friendly_options[group_col_label]
 
 top_n = st.slider("Show top N groups", min_value=5, max_value=50, value=20, step=5)
 
@@ -176,7 +196,7 @@ counts = counts.dropna(subset=[group_col]).copy()
 counts[group_col] = counts[group_col].astype(str)
 
 title = (
-    f"Crime count by {group_col} (Top {top_n})"
+    f"Crime count by {group_col_label} (Top {top_n})"
     f" | {start_date} to {end_date}"
     + ("" if boro == "All" else f" | {boro}")
     + ("" if law_cat == "All" else f" | {law_cat}")
