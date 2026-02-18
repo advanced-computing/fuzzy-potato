@@ -12,10 +12,6 @@ st.set_page_config(page_title="NYC OpenData – Allegations Over Time", layout="
 st.title("Part 2 Streamlit App")
 st.write("Team: Emily Chu, Elsie Zhang")  # <-- change names if needed
 
-# page 2
-st.markdown("# Dataset 2: NYPD Complaint Data Historic")
-st.sidebar.markdown("# Dataset 2: NYPD Complaint Data Historic")
-
 DATASET1_BASE = "https://data.cityofnewyork.us/resource/6xgr-kwjq.json"
 
 
