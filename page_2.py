@@ -230,7 +230,7 @@ with tab1:
 # RQ2
 # -----------------------------
 with tab2:
-    st.subheader("RQ2: Which groups show higher complaint burden and/or higher substantiation intensity?")
+    st.subheader("RQ2: Which groups show higher complaint burden and higher substantiation intensity?")
 
     st.markdown(
         "**Risk Matrix definition**\n"
