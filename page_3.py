@@ -199,9 +199,6 @@ with st.spinner("Aggregating counts from NYC OpenData (server-side)..."):
         st.write("First few rows:")
         st.write(crime_by_precinct.head())
 
-        st.write("Column types:")
-        st.write(crime_by_precinct.dtypes)
-
     except requests.HTTPError as e:
         st.error(
             "NYC OpenData request failed. This can happen if the chosen column "
@@ -228,8 +225,9 @@ title = (
 )
 
 fig = px.bar(
-    crime_by_precinct, x="Precinct", y="Crime Count", title="Crime Count by Precinct"
+    crime_by_precinct, x="precinct", y="crime_count", title="Crime Count by Precinct"
 )
+st.plotly_chart(fig, use_container_width=True)
 
 fig.update_layout(xaxis_title=group_col, yaxis_title="crime_count")
 st.plotly_chart(fig, use_container_width=True)
