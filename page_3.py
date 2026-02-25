@@ -5,6 +5,8 @@ import pandas as pd
 import plotly.express as px
 from datetime import date
 from precinct_helpers import load_dataset1, misconduct_by_precinct
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 officers_df = load_dataset1()
 misconduct_counts = misconduct_by_precinct(officers_df)
@@ -14,6 +16,25 @@ st.sidebar.markdown("# Dataset 2: NYPD Complaint Data Historic")
 
 DATASET2_BASE = "https://data.cityofnewyork.us/resource/qgea-i56i.json"
 
+
+def make_session() -> requests.Session:
+    s = requests.Session()
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=3,
+        backoff_factor=0.8,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    s.mount("https://", adapter)
+    s.mount("http://", adapter)
+    return s
+
+
+SESSION = make_session()
 
 # -------------------------
 # Helpers
@@ -31,12 +52,15 @@ COLUMN_LABELS = {
 
 
 @st.cache_data(show_spinner=False)
-def load_preview(n_rows: int = 2000) -> pd.DataFrame:
+def load_preview(n_rows: int = 200) -> pd.DataFrame:
     """Load a small sample to detect available columns."""
     params = {"$limit": n_rows}
-    r = requests.get(DATASET2_BASE, params=params, timeout=30)
-    r.raise_for_status()
-    return pd.DataFrame(r.json())
+    try:
+        r = SESSION.get(DATASET2_BASE, params=params, timeout=90)
+        r.raise_for_status()
+        return pd.DataFrame(r.json())
+    except requests.exceptions.RequestException:
+        return pd.DataFrame()
 
 
 @st.cache_data(show_spinner=False)
@@ -78,7 +102,7 @@ def fetch_group_counts(
         "$limit": top_n,
     }
 
-    r = requests.get(DATASET2_BASE, params=params, timeout=60)
+    r = SESSION.get(DATASET2_BASE, params=params, timeout=120)
     r.raise_for_status()
     df = pd.DataFrame(r.json())
 
@@ -101,7 +125,7 @@ with st.spinner("Loading preview to detect columns..."):
 
 if df_preview.empty:
     st.error(
-        "Preview returned no data. The dataset endpoint may be unavailable right now."
+        "NYC OpenData timed out or returned no data. Try again, or reduce the preview size / widen timeout."
     )
     st.stop()
 
