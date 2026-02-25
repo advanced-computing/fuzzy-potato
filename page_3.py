@@ -4,8 +4,10 @@ import requests
 import pandas as pd
 import plotly.express as px
 from datetime import date
-from precinct_helpers import misconduct_by_precinct
+from precinct_helpers import load_dataset1, misconduct_by_precinct
 
+officers_df = load_dataset1()
+misconduct_counts = misconduct_by_precinct(officers_df)
 
 st.markdown("# Dataset 2: NYPD Complaint Data Historic")
 st.sidebar.markdown("# Dataset 2: NYPD Complaint Data Historic")
@@ -91,7 +93,7 @@ def fetch_group_counts(
 # UI
 # -------------------------
 st.write(
-    "This page pulls from NYC OpenData and shows a bar chart of crime counts by precinct."
+    "This page pulls from NYC OpenData and shows a bar chart of crime counts by precinct. It answers RQ3: Crime vs Misconduct allegations by precinct"
 )
 
 with st.spinner("Loading preview to detect columns..."):
@@ -183,18 +185,18 @@ with st.spinner("Aggregating counts from NYC OpenData (server-side)..."):
         crime_by_precinct["precinct"] = pd.to_numeric(
             crime_by_precinct[group_col], errors="coerce"
         )
+
         crime_by_precinct = crime_by_precinct.dropna(subset=["precinct"])
         crime_by_precinct["precinct"] = crime_by_precinct["precinct"].astype(int)
-
-        crime_by_precinct["crime_count"] = pd.to_numeric(
-            crime_by_precinct["crime_count"], errors="coerce"
-        )
-        crime_by_precinct = crime_by_precinct.dropna(subset=["crime_count"])
-
         crime_by_precinct = crime_by_precinct[["precinct", "crime_count"]]
 
+        # Add readable precinct names
+        crime_by_precinct["Precinct Name"] = "Precinct " + crime_by_precinct[
+            "precinct"
+        ].astype(str)
+
         # Checking if worked
-        st.subheader("Debug: Crime by precinct preview")
+        st.subheader("Crime by precinct preview")
 
         st.write("First few rows:")
         st.write(crime_by_precinct.head())
@@ -224,16 +226,17 @@ title = (
     + ("" if law_cat == "All" else f" | {law_cat}")
 )
 
+# Bar chart of crime counts by precinct
 fig = px.bar(
-    crime_by_precinct, x="precinct", y="crime_count", title="Crime Count by Precinct"
+    crime_by_precinct,
+    x="Precinct Name",
+    y="crime_count",
+    title="Crime Count by Precinct",
 )
-st.plotly_chart(fig, use_container_width=True)
 
-fig.update_layout(xaxis_title=group_col, yaxis_title="crime_count")
-st.plotly_chart(fig, use_container_width=True)
+fig.update_layout(xaxis_title="Precinct", yaxis_title="Crime Count")
 
-with st.expander("See aggregated table"):
-    st.dataframe(counts, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
 # Show the exact columns to merge on later
 st.info(
@@ -249,32 +252,8 @@ def load_dataset1_officers(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-st.subheader("Dataset 1 (Officer complaints) upload")
-uploaded = st.file_uploader("Upload Dataset 1 CSV", type=["csv"])
-
-if uploaded is None:
-    st.warning("Upload Dataset 1 to merge misconduct allegations with precinct crime.")
-    st.stop()
-
-officers_df = pd.read_csv(uploaded)
-
 # Build misconduct counts from Dataset 1
 misconduct_counts = misconduct_by_precinct(officers_df)
 
 # Merge and visualize relationship
 merged = pd.merge(crime_by_precinct, misconduct_counts, on="precinct", how="inner")
-
-st.subheader("RQ3: Crime vs Misconduct allegations by precinct")
-
-fig2 = px.scatter(
-    merged,
-    x="crime_count",
-    y="allegation_count",
-    trendline="ols",
-    title="Precinct crime count vs misconduct allegations",
-)
-st.plotly_chart(fig2, use_container_width=True)
-
-st.dataframe(
-    merged.sort_values("crime_count", ascending=False), use_container_width=True
-)
