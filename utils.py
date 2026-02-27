@@ -1,13 +1,12 @@
 # utils.py
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Optional, Tuple, Dict
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-
 
 # =========================
 # Core math helpers
@@ -24,7 +23,7 @@ def _to_1d_nonneg_array(values: Iterable[float]) -> np.ndarray:
     return arr
 
 
-def lorenz_curve(values: Iterable[float]) -> Tuple[np.ndarray, np.ndarray]:
+def lorenz_curve(values: Iterable[float]) -> tuple[np.ndarray, np.ndarray]:
     """
     Return Lorenz curve points (x, y) for non-negative values.
 
@@ -84,9 +83,9 @@ def plot_lorenz_curves(
     subst_values: Iterable[float],
     *,
     title: str = "Lorenz Curves for CCRB Complaints (Officer Snapshot)",
-    as_of_date: Optional[str] = None,
-    top_pcts: Tuple[float, float] = (0.01, 0.05),
-) -> Tuple[plt.Figure, plt.Axes, Dict[str, float]]:
+    as_of_date: str | None = None,
+    top_pcts: tuple[float, float] = (0.01, 0.05),
+) -> tuple[plt.Figure, plt.Axes, dict[str, float]]:
     """
     Plot Lorenz curves for:
       - total complaints
@@ -116,9 +115,12 @@ def plot_lorenz_curves(
         bbox_to_anchor=(1.02, 0.5),
         borderaxespad=0.0,
     )
-    fig.subplots_adjust(right=0.78) 
+    fig.subplots_adjust(right=0.78)
 
-    caption = f"Gini(Total)={g1:.3f}   Gini(Subst)={g2:.3f}   Top 1% share={top1:.1%}   Top 5% share={top5:.1%}"
+    caption = (
+        f"Gini(Total)={g1:.3f}   Gini(Subst)={g2:.3f}   "
+        f"Top 1% share={top1:.1%}   Top 5% share={top5:.1%}"
+    )
     if as_of_date:
         caption = f"As Of Date: {as_of_date}   " + caption
     fig.text(0.5, 0.005, caption, ha="center", va="bottom", fontsize=10)
@@ -155,7 +157,10 @@ def _validate_group_col(df: pd.DataFrame, group_col: str) -> None:
     if group_col not in df.columns:
         raise ValueError(f"group_col='{group_col}' not found in DataFrame.")
     if group_col not in ALLOWED_RQ2_GROUP_COLS:
-        raise ValueError(f"group_col='{group_col}' not allowed. Choose one of {sorted(ALLOWED_RQ2_GROUP_COLS)}.")
+        allowed = sorted(ALLOWED_RQ2_GROUP_COLS)
+        raise ValueError(
+            f"group_col='{group_col}' not allowed. Choose one of {allowed}."
+        )
 
 
 @dataclass(frozen=True)
@@ -166,7 +171,7 @@ class GroupStats:
     median_subst_per_100: float
 
 
-def compute_group_stats(
+def compute_group_stats(  # noqa: PLR0913
     df: pd.DataFrame,
     *,
     group_col: str,
@@ -209,8 +214,16 @@ def compute_group_stats(
         np.nan,
     )
 
-    med_x = float(np.nanmedian(grouped["avg_complaints_per_officer"])) if len(grouped) else float("nan")
-    med_y = float(np.nanmedian(grouped["substantiated_per_100_complaints"])) if len(grouped) else float("nan")
+    if len(grouped):
+        med_x = float(
+            np.nanmedian(grouped["avg_complaints_per_officer"])
+        )
+        med_y = float(
+            np.nanmedian(grouped["substantiated_per_100_complaints"])
+        )
+    else:
+        med_x = float("nan")
+        med_y = float("nan")
 
     return GroupStats(
         table=grouped.sort_values("avg_complaints_per_officer").reset_index(drop=True),
@@ -225,7 +238,7 @@ def plot_risk_matrix(
     *,
     title: str = "Risk Matrix (Snapshot)",
     annotate_top_n: int = 0,
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes]:
     """
     Bubble scatter:
       x = avg complaints per officer
