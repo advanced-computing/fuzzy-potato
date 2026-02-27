@@ -66,7 +66,7 @@ def load_preview(n_rows: int = 200) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def fetch_group_counts( # noqa: PLR0913
+def fetch_group_counts(  # noqa: PLR0913
     group_col: str,
     top_n: int,
     start_dt: str | None = None,
@@ -168,9 +168,7 @@ community_keywords = [
     "ofns",
     "pd_desc",
 ]
-candidates = [
-    c for c in df_preview.columns if any(k in c.lower() for k in community_keywords)
-]
+candidates = [c for c in df_preview.columns if any(k in c.lower() for k in community_keywords)]
 if not candidates:
     candidates = list(df_preview.columns)
 
@@ -210,18 +208,14 @@ with st.spinner("Aggregating counts from NYC OpenData (server-side)..."):
         # Keep only valid precinct rows and make precinct numeric
         crime_by_precinct = counts.dropna(subset=[group_col]).copy()
 
-        crime_by_precinct["precinct"] = pd.to_numeric(
-            crime_by_precinct[group_col], errors="coerce"
-        )
+        crime_by_precinct["precinct"] = pd.to_numeric(crime_by_precinct[group_col], errors="coerce")
 
         crime_by_precinct = crime_by_precinct.dropna(subset=["precinct"])
         crime_by_precinct["precinct"] = crime_by_precinct["precinct"].astype(int)
         crime_by_precinct = crime_by_precinct[["precinct", "crime_count"]]
 
         # Add readable precinct names
-        crime_by_precinct["Precinct Name"] = "Precinct " + crime_by_precinct[
-            "precinct"
-        ].astype(str)
+        crime_by_precinct["Precinct Name"] = "Precinct " + crime_by_precinct["precinct"].astype(str)
 
         # Checking if worked
         st.subheader("Crime by precinct preview")
@@ -238,9 +232,7 @@ with st.spinner("Aggregating counts from NYC OpenData (server-side)..."):
         st.stop()
 
 if counts.empty or group_col not in counts.columns:
-    st.warning(
-        "No results returned. Try a different grouping column or widen your date range."
-    )
+    st.warning("No results returned. Try a different grouping column or widen your date range.")
     st.stop()
 
 # Clean labels
@@ -268,11 +260,11 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Show the exact columns to merge on later
 st.info(
-        "For your research question, the key precinct column in Dataset 2 is "
-        "**`addr_pct_cd`**. "
-        "Aggregate to **crime_count by addr_pct_cd**, then merge with Dataset 1’s "
-        "**misconduct_count by precinct** "
-        "using 'precinct'/'addr_pct_cd' (make sure both are numeric or both are strings)."
+    "For your research question, the key precinct column in Dataset 2 is "
+    "**`addr_pct_cd`**. "
+    "Aggregate to **crime_count by addr_pct_cd**, then merge with Dataset 1’s "
+    "**misconduct_count by precinct** "
+    "using 'precinct'/'addr_pct_cd' (make sure both are numeric or both are strings)."
 )
 
 
