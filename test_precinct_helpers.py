@@ -36,6 +36,6 @@ def test_misconduct_by_precinct_sums_total_complaints_by_precinct():
 
     agg = misconduct_by_precinct(officers)
 
-    got = dict(zip(agg["precinct"], agg["allegation_count"]))
+    got = dict(zip(agg["precinct"], agg["allegation_count"], strict=True))
     # AVIATION should be excluded because it's not a precinct
     assert got == {113: 5, 10: 1}

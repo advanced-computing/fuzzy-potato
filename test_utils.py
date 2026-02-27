@@ -1,5 +1,7 @@
 # test_utils.py
+
 import matplotlib
+
 matplotlib.use("Agg")  # headless backend for tests
 
 import numpy as np
@@ -7,16 +9,16 @@ import pandas as pd
 import pytest
 
 from utils import (
-    lorenz_curve,
-    gini_coefficient,
-    top_share,
-    plot_lorenz_curves,
-    compute_group_stats,
-    plot_risk_matrix,
     GroupStats,
+    compute_group_stats,
+    gini_coefficient,
+    lorenz_curve,
+    plot_lorenz_curves,
+    plot_risk_matrix,
+    top_share,
 )
 
-
+EPS = 1e-12
 def test_lorenz_curve_all_zero_returns_equality():
     x, y = lorenz_curve([0, 0, 0, 0])
     assert np.allclose(x, y)
@@ -26,18 +28,18 @@ def test_lorenz_curve_all_zero_returns_equality():
 
 def test_gini_perfect_equality_is_zero():
     g = gini_coefficient([5, 5, 5, 5])
-    assert abs(g - 0.0) < 1e-12
+    assert abs(g - 0.0) < EPS
 
 
 def test_gini_extreme_concentration_n4():
     g = gini_coefficient([0, 0, 0, 100])
     # For n=4 discrete case: (n-1)/n = 0.75
-    assert abs(g - 0.75) < 1e-12
+    assert abs(g - 0.75) < EPS
 
 
 def test_top_share_simple_case():
     share = top_share([1, 2, 3, 4], 0.5)  # top2 => 7/10
-    assert abs(share - 0.7) < 1e-12
+    assert abs(share - 0.7) < EPS
 
 
 def test_plot_lorenz_curves_runs_and_returns_summary():
