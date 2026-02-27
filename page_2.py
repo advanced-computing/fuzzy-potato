@@ -56,7 +56,7 @@ NUMERIC_COLS = ["Total Complaints", "Total Substantiated Complaints"]
 # -----------------------------
 # HTTP helpers
 # -----------------------------
-def _get_json(params: Dict[str, str], timeout: int = 60) -> List[dict]:
+def _get_json(params: dict[str, str], timeout: int = 60) -> List[dict]:
     r = requests.get(SOCRATA_URL, params=params, timeout=timeout)
     r.raise_for_status()
     return r.json()
