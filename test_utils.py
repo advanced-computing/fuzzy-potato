@@ -19,6 +19,8 @@ from utils import (
 )
 
 EPS = 1e-12
+
+
 def test_lorenz_curve_all_zero_returns_equality():
     x, y = lorenz_curve([0, 0, 0, 0])
     assert np.allclose(x, y)
@@ -50,6 +52,7 @@ def test_plot_lorenz_curves_runs_and_returns_summary():
     assert 0 <= summary["gini_subst"] <= 1
     # cleanup
     import matplotlib.pyplot as plt
+
     plt.close(fig)
 
 
@@ -100,6 +103,7 @@ def test_plot_risk_matrix_runs():
     fig, ax = plot_risk_matrix(stats, title="Test Risk Matrix")
     assert fig is not None and ax is not None
     import matplotlib.pyplot as plt
+
     plt.close(fig)
 
 

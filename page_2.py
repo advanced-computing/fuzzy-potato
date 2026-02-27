@@ -77,10 +77,7 @@ def _build_where_clause(as_of_date: str | None) -> str | None:
     """Build Socrata WHERE clause for date filtering."""
     if not as_of_date:
         return None
-    return (
-        f"as_of_date >= '{as_of_date}T00:00:00.000' "
-        f"AND as_of_date < '{as_of_date}T23:59:59.999'"
-    )
+    return f"as_of_date >= '{as_of_date}T00:00:00.000' AND as_of_date < '{as_of_date}T23:59:59.999'"
 
 
 def _fetch_all_rows(
@@ -171,11 +168,14 @@ if auto_latest:
     with st.sidebar.spinner("Fetching latest as_of_date…"):
         latest = _latest_as_of_date()
 
-as_of_date = st.sidebar.text_input(
-    "Snapshot date (YYYY-MM-DD)",
-    value=latest or "",
-    help="This dataset is a daily snapshot; all rows typically share the same As Of Date.",
-).strip() or None
+as_of_date = (
+    st.sidebar.text_input(
+        "Snapshot date (YYYY-MM-DD)",
+        value=latest or "",
+        help="This dataset is a daily snapshot; all rows typically share the same As Of Date.",
+    ).strip()
+    or None
+)
 
 max_rows_ui = st.sidebar.number_input(
     "Max rows to load (0 = all)",
@@ -231,10 +231,10 @@ with tab1:
     st.subheader("RQ1: Are complaints concentrated among a small subset of officers?")
 
     st.markdown(
-            "This plot compares how **Total Complaints** and "
-            "**Total Substantiated Complaints** are distributed across officers. "
-            "If the curve bows far below the equality line, outcomes are "
-            "concentrated among fewer officers."
+        "This plot compares how **Total Complaints** and "
+        "**Total Substantiated Complaints** are distributed across officers. "
+        "If the curve bows far below the equality line, outcomes are "
+        "concentrated among fewer officers."
     )
 
     as_of_str = None
@@ -251,8 +251,8 @@ with tab1:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Gini (Total)", f"{summary['gini_total']:.3f}")
     c2.metric("Gini (Substantiated)", f"{summary['gini_subst']:.3f}")
-    c3.metric("Top 1% share (Total)", f"{summary['top_1pct_share_total']*100:.1f}%")
-    c4.metric("Top 5% share (Total)", f"{summary['top_5pct_share_total']*100:.1f}%")
+    c3.metric("Top 1% share (Total)", f"{summary['top_1pct_share_total'] * 100:.1f}%")
+    c4.metric("Top 5% share (Total)", f"{summary['top_5pct_share_total'] * 100:.1f}%")
 
     st.caption(
         "Interpretation: Higher Gini means greater concentration. "
@@ -265,8 +265,7 @@ with tab1:
 # -----------------------------
 with tab2:
     st.subheader(
-        "RQ2: Which groups show higher complaint burden and higher "
-        "substantiation intensity?"
+        "RQ2: Which groups show higher complaint burden and higher substantiation intensity?"
     )
 
     st.markdown(

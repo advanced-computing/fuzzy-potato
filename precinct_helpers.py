@@ -28,10 +28,7 @@ def extract_precinct_from_command(
     out = officers_df.copy()
 
     out["precinct"] = (
-        out[command_col]
-        .astype(str)
-        .str.strip()
-        .str.extract(r"(\d+)\s*PCT", expand=False)
+        out[command_col].astype(str).str.strip().str.extract(r"(\d+)\s*PCT", expand=False)
     )
 
     out["precinct"] = pd.to_numeric(out["precinct"], errors="coerce")
@@ -83,10 +80,7 @@ def misconduct_by_precinct(officers_df: pd.DataFrame) -> pd.DataFrame:
         df["precinct"] = pd.to_numeric(df[command_col], errors="coerce")
     else:
         df["precinct"] = (
-            df[command_col]
-            .astype(str)
-            .str.strip()
-            .str.extract(r"(\d+)\s*PCT", expand=False)
+            df[command_col].astype(str).str.strip().str.extract(r"(\d+)\s*PCT", expand=False)
         )
         df["precinct"] = pd.to_numeric(df["precinct"], errors="coerce")
 
@@ -95,8 +89,4 @@ def misconduct_by_precinct(officers_df: pd.DataFrame) -> pd.DataFrame:
 
     df[complaints_col] = pd.to_numeric(df[complaints_col], errors="coerce").fillna(0)
 
-    return (
-        df.groupby("precinct")[complaints_col]
-        .sum()
-        .reset_index(name="allegation_count")
-    )
+    return df.groupby("precinct")[complaints_col].sum().reset_index(name="allegation_count")

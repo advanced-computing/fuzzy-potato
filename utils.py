@@ -12,6 +12,7 @@ import pandas as pd
 # Core math helpers
 # =========================
 
+
 def _to_1d_nonneg_array(values: Iterable[float]) -> np.ndarray:
     arr = np.asarray(list(values), dtype=float).reshape(-1)
     if arr.size == 0:
@@ -77,6 +78,7 @@ def top_share(values: Iterable[float], top_pct: float) -> float:
 # =========================
 # RQ1: Plot Lorenz + Gini
 # =========================
+
 
 def plot_lorenz_curves(
     total_values: Iterable[float],
@@ -158,9 +160,7 @@ def _validate_group_col(df: pd.DataFrame, group_col: str) -> None:
         raise ValueError(f"group_col='{group_col}' not found in DataFrame.")
     if group_col not in ALLOWED_RQ2_GROUP_COLS:
         allowed = sorted(ALLOWED_RQ2_GROUP_COLS)
-        raise ValueError(
-            f"group_col='{group_col}' not allowed. Choose one of {allowed}."
-        )
+        raise ValueError(f"group_col='{group_col}' not allowed. Choose one of {allowed}.")
 
 
 @dataclass(frozen=True)
@@ -215,12 +215,8 @@ def compute_group_stats(  # noqa: PLR0913
     )
 
     if len(grouped):
-        med_x = float(
-            np.nanmedian(grouped["avg_complaints_per_officer"])
-        )
-        med_y = float(
-            np.nanmedian(grouped["substantiated_per_100_complaints"])
-        )
+        med_x = float(np.nanmedian(grouped["avg_complaints_per_officer"]))
+        med_y = float(np.nanmedian(grouped["substantiated_per_100_complaints"]))
     else:
         med_x = float("nan")
         med_y = float("nan")
@@ -287,5 +283,3 @@ def plot_risk_matrix(
             )
 
     return fig, ax
-
-
