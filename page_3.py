@@ -1,12 +1,14 @@
 # page_3.py
-import streamlit as st
-import requests
+from datetime import date
+
 import pandas as pd
 import plotly.express as px
-from datetime import date
-from precinct_helpers import load_dataset1, misconduct_by_precinct
+import requests
+import streamlit as st
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+from precinct_helpers import load_dataset1, misconduct_by_precinct
 
 officers_df = load_dataset1()
 misconduct_counts = misconduct_by_precinct(officers_df)
@@ -64,7 +66,7 @@ def load_preview(n_rows: int = 200) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False)
-def fetch_group_counts(
+def fetch_group_counts( # noqa: PLR0913
     group_col: str,
     top_n: int,
     start_dt: str | None = None,
@@ -117,7 +119,8 @@ def fetch_group_counts(
 # UI
 # -------------------------
 st.write(
-    "This page pulls from NYC OpenData and shows a bar chart of crime counts by precinct. It answers RQ3: Crime vs Misconduct allegations by precinct"
+    "This page pulls from NYC OpenData and shows a bar chart of crime counts by precinct. "
+    "It answers RQ3: Crime vs Misconduct allegations by precinct"
 )
 
 with st.spinner("Loading preview to detect columns..."):
@@ -125,7 +128,8 @@ with st.spinner("Loading preview to detect columns..."):
 
 if df_preview.empty:
     st.error(
-        "NYC OpenData timed out or returned no data. Try again, or reduce the preview size / widen timeout."
+        "NYC OpenData timed out or returned no data. Try again, or reduce the "
+        "preview size / widen timeout."
     )
     st.stop()
 
@@ -264,9 +268,11 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Show the exact columns to merge on later
 st.info(
-    "For your research question, the key precinct column in Dataset 2 is **`addr_pct_cd`**. "
-    "Aggregate to **crime_count by addr_pct_cd**, then merge with Dataset 1’s **misconduct_count by precinct** "
-    "using `precinct`/`addr_pct_cd` (make sure both are numeric or both are strings)."
+        "For your research question, the key precinct column in Dataset 2 is "
+        "**`addr_pct_cd`**. "
+        "Aggregate to **crime_count by addr_pct_cd**, then merge with Dataset 1’s "
+        "**misconduct_count by precinct** "
+        "using 'precinct'/'addr_pct_cd' (make sure both are numeric or both are strings)."
 )
 
 
@@ -280,4 +286,8 @@ def load_dataset1_officers(path: str) -> pd.DataFrame:
 misconduct_counts = misconduct_by_precinct(officers_df)
 
 # Merge and visualize relationship
-merged = pd.merge(crime_by_precinct, misconduct_counts, on="precinct", how="inner")
+merged = crime_by_precinct.merge(
+    misconduct_counts,
+    on="precinct",
+    how="inner",
+)

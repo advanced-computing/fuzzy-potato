@@ -5,16 +5,13 @@
 
 from __future__ import annotations
 
-
-from typing import Dict, List, Optional
-
 import pandas as pd
 import requests
 import streamlit as st
 
 from utils import (
-    plot_lorenz_curves,
     compute_group_stats,
+    plot_lorenz_curves,
     plot_risk_matrix,  # (plot_command_risk_matrix is also available as alias if you prefer)
 )
 
@@ -31,9 +28,9 @@ st.caption(
 # -----------------------------
 # Socrata config
 # -----------------------------
-SOCRATA_URL = f"https://data.cityofnewyork.us/resource/2fir-qns4.json"
+SOCRATA_URL = "https://data.cityofnewyork.us/resource/2fir-qns4.json"
 
-API_TO_DF: Dict[str, str] = {
+API_TO_DF: dict[str, str] = {
     "as_of_date": "As Of Date",
     "tax_id": "Tax ID",
     "active_per_last_reported_status": "Active Per Last Reported Status",
@@ -56,13 +53,13 @@ NUMERIC_COLS = ["Total Complaints", "Total Substantiated Complaints"]
 # -----------------------------
 # HTTP helpers
 # -----------------------------
-def _get_json(params: dict[str, str], timeout: int = 60) -> List[dict]:
+def _get_json(params: dict[str, str], timeout: int = 60) -> list[dict]:
     r = requests.get(SOCRATA_URL, params=params, timeout=timeout)
     r.raise_for_status()
     return r.json()
 
 
-def _latest_as_of_date() -> Optional[str]:
+def _latest_as_of_date() -> str | None:
     """
     Returns latest as_of_date as YYYY-MM-DD (best-effort).
     """
@@ -76,24 +73,25 @@ def _latest_as_of_date() -> Optional[str]:
     return str(raw)[:10]
 
 
-@st.cache_data(show_spinner=False)
-def load_snapshot(as_of_date: Optional[str], max_rows: Optional[int] = None) -> pd.DataFrame:
-    """
-    Load 2fir-qns4 snapshot from Socrata.
-    If as_of_date is provided, filter to that date (snapshot day).
-    """
-    select_fields = ", ".join(API_TO_DF.keys())
+def _build_where_clause(as_of_date: str | None) -> str | None:
+    """Build Socrata WHERE clause for date filtering."""
+    if not as_of_date:
+        return None
+    return (
+        f"as_of_date >= '{as_of_date}T00:00:00.000' "
+        f"AND as_of_date < '{as_of_date}T23:59:59.999'"
+    )
 
-    where_clause = None
-    if as_of_date:
-        # include anything on that day (Socrata timestamps)
-        where_clause = (
-            f"as_of_date >= '{as_of_date}T00:00:00.000' "
-            f"AND as_of_date < '{as_of_date}T23:59:59.999'"
-        )
 
-    rows: List[dict] = []
-    limit = 50000
+def _fetch_all_rows(
+    select_fields: str,
+    where_clause: str | None,
+    max_rows: int | None,
+) -> list[dict[str, object]]:
+    """Fetch all rows from Socrata with pagination."""
+    rows: list[dict[str, object]] = []
+    limit = 50_000
+    offset = 0
     offset = 0
 
     while True:
@@ -118,7 +116,11 @@ def load_snapshot(as_of_date: Optional[str], max_rows: Optional[int] = None) -> 
         if len(batch) < batch_limit:
             break
 
-    df = pd.DataFrame(rows)
+    return rows
+
+
+def _process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Process and clean the dataframe."""
     if df.empty:
         return pd.DataFrame(columns=list(API_TO_DF.values()))
 
@@ -127,7 +129,8 @@ def load_snapshot(as_of_date: Optional[str], max_rows: Optional[int] = None) -> 
 
     # types
     if "As Of Date" in df.columns:
-        df["As Of Date"] = pd.to_datetime(df["As Of Date"], errors="coerce").dt.date.astype("string")
+        as_of = pd.to_datetime(df["As Of Date"], errors="coerce")
+        df["As Of Date"] = as_of.dt.date.astype("string")
 
     for c in NUMERIC_COLS:
         df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0).astype(int)
@@ -138,6 +141,22 @@ def load_snapshot(as_of_date: Optional[str], max_rows: Optional[int] = None) -> 
             df[c] = df[c].fillna("Unknown")
 
     return df
+
+
+@st.cache_data(show_spinner=False)
+def load_snapshot(
+    as_of_date: str | None,
+    max_rows: int | None = None,
+) -> pd.DataFrame:
+    """
+    Load 2fir-qns4 snapshot from Socrata.
+    If as_of_date is provided, filter to that date (snapshot day).
+    """
+    select_fields = ", ".join(API_TO_DF.keys())
+    where_clause = _build_where_clause(as_of_date)
+    rows = _fetch_all_rows(select_fields, where_clause, max_rows)
+    df = pd.DataFrame(rows)
+    return _process_dataframe(df)
 
 
 # -----------------------------
@@ -185,8 +204,16 @@ if df.empty:
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Officers (rows)", f"{len(df):,}")
 m2.metric("Total complaints (sum)", f"{int(df['Total Complaints'].sum()):,}")
-m3.metric("Total substantiated (sum)", f"{int(df['Total Substantiated Complaints'].sum()):,}")
-m4.metric("As Of Date", str(df["As Of Date"].dropna().iloc[0]) if df["As Of Date"].notna().any() else "Unknown")
+m3.metric(
+    "Total substantiated (sum)",
+    f"{int(df['Total Substantiated Complaints'].sum()):,}",
+)
+
+as_of_str = "Unknown"
+if "As Of Date" in df.columns and df["As Of Date"].notna().any():
+    as_of_str = str(df["As Of Date"].dropna().iloc[0])
+
+m4.metric("As Of Date", as_of_str)
 
 st.divider()
 
@@ -204,14 +231,20 @@ with tab1:
     st.subheader("RQ1: Are complaints concentrated among a small subset of officers?")
 
     st.markdown(
-        "This plot compares how **Total Complaints** and **Total Substantiated Complaints** are distributed across officers. "
-        "If the curve bows far below the equality line, outcomes are concentrated among fewer officers."
+            "This plot compares how **Total Complaints** and "
+            "**Total Substantiated Complaints** are distributed across officers. "
+            "If the curve bows far below the equality line, outcomes are "
+            "concentrated among fewer officers."
     )
+
+    as_of_str = None
+    if "As Of Date" in df.columns and df["As Of Date"].notna().any():
+        as_of_str = str(df["As Of Date"].dropna().iloc[0])
 
     fig, ax, summary = plot_lorenz_curves(
         total_values=df["Total Complaints"].tolist(),
         subst_values=df["Total Substantiated Complaints"].tolist(),
-        as_of_date=(str(df["As Of Date"].dropna().iloc[0]) if df["As Of Date"].notna().any() else None),
+        as_of_date=as_of_str,
     )
     st.pyplot(fig, clear_figure=True)
 
@@ -223,14 +256,18 @@ with tab1:
 
     st.caption(
         "Interpretation: Higher Gini means greater concentration. "
-        "Top 1%/5% shares show how much of total complaints come from the most-complained-about officers."
+        "Top 1%/5% shares show how much of total complaints come from the "
+        "most-complained-about officers."
     )
 
 # -----------------------------
 # RQ2
 # -----------------------------
 with tab2:
-    st.subheader("RQ2: Which groups show higher complaint burden and higher substantiation intensity?")
+    st.subheader(
+        "RQ2: Which groups show higher complaint burden and higher "
+        "substantiation intensity?"
+    )
 
     st.markdown(
         "**Risk Matrix definition**\n"
