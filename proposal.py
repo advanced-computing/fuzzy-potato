@@ -3,7 +3,7 @@ import streamlit as st
 st.title("📄 Project Proposal")
 
 st.info(
-"""
+    """
 This project analyzes patterns in **NYPD misconduct complaints** and compares them with
 **crime levels across precincts** in New York City using NYC Open Data datasets.
 """
