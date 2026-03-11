@@ -4,7 +4,8 @@ st.title("📄 Project Proposal")
 
 st.info(
 """
-This project analyzes patterns in **NYPD misconduct complaints** and compares them with **crime levels across precincts** in New York City using NYC Open Data datasets.
+This project analyzes patterns in **NYPD misconduct complaints** and compares them with
+**crime levels across precincts** in New York City using NYC Open Data datasets.
 """
 )
 
@@ -17,11 +18,13 @@ st.header("📂 Data Sources", divider="blue")
 st.subheader("Dataset 1: CCRB Police Officer Complaints")
 
 st.markdown("""
-Source: NYC Open Data  
+Source: NYC Open Data
 
-https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Police-Officers/2fir-qns4/about_data  
+https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Police-Officers/2fir-qns4/about_data
 
-This dataset contains officer-level complaint records from the **Civilian Complaint Review Board (CCRB)**.  
+This dataset contains officer-level complaint records from the
+**Civilian Complaint Review Board (CCRB)**.
+
 It includes information such as:
 
 - officer demographics
@@ -33,11 +36,11 @@ It includes information such as:
 st.subheader("Dataset 2: NYPD Complaint Data Historic")
 
 st.markdown("""
-Source: NYC Open Data  
+Source: NYC Open Data
 
-https://data.cityofnewyork.us/Public-Safety/NYPD-Complaint-Data-Historic/qgea-i56i/about_data  
+https://data.cityofnewyork.us/Public-Safety/NYPD-Complaint-Data-Historic/qgea-i56i/about_data
 
-This dataset contains historical complaint reports related to crimes in New York City.  
+This dataset contains historical complaint reports related to crimes in New York City.
 It includes information such as:
 
 - complaint type
@@ -81,12 +84,13 @@ Key steps:
 
 2. Aggregate crime incidents to calculate **crime_count by precinct**.
 
-3. Merge this with Dataset 1's **misconduct_count by precinct** using  
+3. Merge this with Dataset 1's **misconduct_count by precinct** using
 `precinct` (Dataset 1) and `addr_pct_cd` (Dataset 2).
 
 4. Ensure both columns have matching types (both numeric or both string).
 
-This allows us to explore whether precincts with **higher crime levels also show higher misconduct complaint levels**.
+This allows us to explore whether precincts with **higher crime levels**
+also show higher misconduct complaint levels**.
 """)
 
 # ----------------------------------------------------
