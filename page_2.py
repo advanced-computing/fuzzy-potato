@@ -7,13 +7,9 @@ from __future__ import annotations
 
 import pandas as pd
 import streamlit as st
-from bigquery_helpers import load_table  # type: ignore
 
-from utils import (
-    compute_group_stats,
-    plot_lorenz_curves,
-    plot_risk_matrix,
-)
+from bigquery_helpers import load_table  # type: ignore
+from utils import compute_group_stats, plot_lorenz_curves, plot_risk_matrix
 
 # -----------------------------
 # Page config + title
