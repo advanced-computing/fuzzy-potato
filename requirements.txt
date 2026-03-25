@@ -10,3 +10,7 @@ jupyter-book==1.*
 
 pytest
 pytest-cov
+
+google-cloud-bigquery
+pandas-gbq
+pyarrow
