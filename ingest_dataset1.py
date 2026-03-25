@@ -1,5 +1,5 @@
-import requests
 import pandas as pd
+import requests
 from pandas_gbq import to_gbq
 
 PROJECT_ID = "fuzzy-potato-491318"
