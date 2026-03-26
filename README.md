@@ -1,52 +1,88 @@
 # fuzzy-potato
-Group project repository: Elsie, Emily
 
-Project 1 Part 1: Proposal
-Group fuzzy-potato: Emily Chu, Elsie Zhang
+Group project repository for Advanced Computing  
+Group members: **Emily Chu, Elsie Zhang**
 
-1. Dataset
+## Project Overview
 
-Name: [Civilian Complaint Review Board: Allegations Against Police Officers](https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Allegations-Agains/6xgr-kwjq/about_data)
+This project studies patterns of police misconduct in New York City using two NYC public safety datasets.  
+We focus on three questions: whether misconduct allegations are concentrated among a small group of officers, how allegation patterns vary across NYPD commands or ranks, and whether precincts with higher crime levels also have more misconduct allegations.
 
-The dataset contains detailed records of civilian allegations of misconduct against NYPD officers, which includes allegation type, officer information, victim demographics, and investigation outcomes. We can use this dataset to conduct an analysis on the patterns and track accountability in police misconduct.
+## Live App
 
-2. Research Questions
-How do police misconduct allegations vary across NYPD commands and over time in New York City?
+Main app:  
+https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/
 
-What types of charges are predominant in different police units, and have these types changed over time?
+## Data Sources
 
-Are NYPD precincts with higher crime levels associated with higher numbers of police misconduct allegations?
+This project uses **two** NYC Open Data datasets.
 
-3. Notebook Link
-<a target="_blank" href="https://colab.research.google.com/github/advanced-computing/fuzzy-potato/blob/main/GroupProject.ipynb">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+### 1. Civilian Complaint Review Board: Police Officers
+https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Police-Officers/2fir-qns4/about_data
 
-4. Target Visualization
-To be updated
-5. Known Unknowns
+This dataset provides officer-level information from the CCRB, including officer identifiers, rank, command, and complaint-related variables.  
+We use it to analyze how misconduct allegations are distributed across officers and how patterns differ across commands or ranks.
 
-Known: 
+### 2. NYPD Complaint Data Historic
+https://data.cityofnewyork.us/Public-Safety/NYPD-Complaint-Data-Historic/qgea-i56i/about_data
 
-Number of misconduct allegations that allows us to measure variation in allegation frequency
+This dataset contains historical NYPD complaint records.  
+We use it as a proxy for crime levels across precincts and compare those patterns with police misconduct allegations.
 
-NYPD command associated with each allegation enables the comparison of misconduct allegations across different commands
+## Research Questions
 
-Dates of each allegations to analyze trends over time
+1. **How concentrated are misconduct allegations across NYPD officers?**  
+   We examine whether a small share of officers accounts for a large share of allegations.
 
-Type of misconduct, which we use to analyze whether certain commands have more serious types of allegations
+2. **How do misconduct risks vary across commands or ranks?**  
+   We compare officer groups to identify where allegations are more common.
 
-Unknown: 
+3. **Are NYPD precincts with higher crime levels associated with higher numbers of police misconduct allegations?**  
+   We explore whether precincts with more crime also tend to have more misconduct allegations.
 
-Number of officers in each command, which would be hard for us to calculate allegation rates per officer
+## App Structure
 
-Policing activity levels and crime rates for each precinct that limits the ability to interpret why some commands have more allegations
+### Proposal Page
+Introduces the project motivation, datasets, research questions, known unknowns, and anticipated challenges.
 
-External factors that influence allegations, such as crime levels, neighborhood characteristics, and population served
+https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/proposal_page
 
-6. Anticipated Challenges
-Data cleaning and standardization, as there are different naming formats withiin the data that causes inaccurate counts and inconsistencies of data formatting
+### Page 2
+Focuses on officer-level and command-level misconduct patterns, including concentration analysis and group comparisons.
+https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/page_2
 
-Data aggregation and interpretation, as multiple allegations may come from the same complaint while each row represents an allegation that affects interpretation
+### Page 3
+Focuses on the relationship between crime levels and police misconduct allegations across precincts.
 
-Large dataset size that may cause dashboard loading and filtering to be slow. We might need to pre-aggregate data before visualization through filtering the data
+https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/page_3
+
+
+## Known Unknowns
+
+### Known
+- The number of misconduct allegations helps measure variation in allegation frequency.
+- Officer rank and command information allow comparisons across organizational groups.
+- Complaint dates allow us to examine patterns over time.
+
+### Unknown
+- The total number of officers in each command, which limits our ability to calculate allegation rates per officer.
+- True policing activity levels by precinct or command.
+- External factors such as neighborhood characteristics, enforcement intensity, and reporting behavior.
+
+## Anticipated Challenges
+
+- **Data cleaning and standardization**  
+  Command names, officer identifiers, and other variables may have inconsistent formatting.
+
+- **Data aggregation and interpretation**  
+  Multiple allegations may be linked to the same complaint, so counts must be interpreted carefully.
+
+- **Data integration**  
+  Matching officer-level misconduct data with precinct-level complaint data requires additional cleaning and alignment.
+
+- **Performance**  
+  Large datasets may slow down loading and filtering in the dashboard.
+
+## Repository Purpose
+
+This repository contains the code, notebook work, and Streamlit app for our Advanced Computing group project.
