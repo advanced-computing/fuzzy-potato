@@ -59,7 +59,8 @@ def fetch_preview_rows() -> pd.DataFrame:
 
 
 st.write(
-    "This page pulls aggregated results from BigQuery and shows a bar chart of crime counts by precinct."
+    "This page pulls aggregated results from BigQuery and shows a bar "
+    "chart of crime counts by precinct."
 )
 
 st.sidebar.subheader("Filters (optional)")
