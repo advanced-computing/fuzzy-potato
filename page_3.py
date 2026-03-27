@@ -260,7 +260,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Show the exact columns to merge on later
 st.info(
-    "For your research question, the key precinct column in Dataset 2 is "
+    "For our research question, the key precinct column in Dataset 2 is "
     "**`addr_pct_cd`**. "
     "Aggregate to **crime_count by addr_pct_cd**, then merge with Dataset 1’s "
     "**misconduct_count by precinct** "
