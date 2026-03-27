@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import time
+
 import pandas as pd
 import streamlit as st
 
@@ -15,6 +17,7 @@ from utils import (
     plot_risk_matrix,
 )
 
+start_time = time.time()
 # -----------------------------
 # Page config + title
 # -----------------------------
@@ -268,3 +271,6 @@ with tab3:
         file_name=f"ccrb_officer_snapshot_{export_date}.csv",
         mime="text/csv",
     )
+
+elapsed = time.time() - start_time
+st.caption(f"Page loaded in {elapsed:.2f} seconds")
