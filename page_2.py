@@ -125,6 +125,11 @@ def convert_to_csv(df: pd.DataFrame) -> bytes:
     return df.to_csv(index=False).encode("utf-8")
 
 
+@st.cache_data(show_spinner=False)
+def cached_group_stats(df: pd.DataFrame, group_col: str, min_officers: int):
+    return compute_group_stats(df, group_col=group_col, min_officers=min_officers)
+
+
 # -----------------------------
 # Sidebar
 # -----------------------------
@@ -146,8 +151,8 @@ if st.sidebar.button("Clear cache"):
 # -----------------------------
 # Load data
 # -----------------------------
-with st.spinner("Loading snapshot from BigQuery..."):
-    df = load_snapshot(max_rows=max_rows)
+
+df = load_snapshot(max_rows=max_rows)
 
 if df.empty:
     st.error("No data returned from BigQuery.")
@@ -196,7 +201,7 @@ if section == "RQ1 – Concentration (Lorenz/Gini)":
         rq1_as_of_str = str(df["As Of Date"].dropna().max().date())
 
     fig, ax, summary = plot_lorenz_curves(
-        total_values=df["Total Complaints"].tolist(),
+        total_values=df["Total Complaints"].values,
         subst_values=df["Total Substantiated Complaints"].tolist(),
         as_of_date=rq1_as_of_str,
     )
@@ -238,7 +243,7 @@ elif section == "RQ2 – Risk Matrix (Group)":
         min_officers = st.slider("Minimum officers per group", 50, 1000, 200, step=50)
         annotate_n = st.slider("Annotate top-N (by avg complaints)", 0, 20, 0, step=1)
 
-    group_stats = compute_group_stats(
+    group_stats = cached_group_stats(
         df,
         group_col=group_col,
         min_officers=int(min_officers),
