@@ -5,6 +5,7 @@ import streamlit as st
 from google.cloud import bigquery
 
 
+@st.cache_resource
 def get_bigquery_client() -> bigquery.Client:
     credentials_info = {
         "type": st.secrets["gcp_service_account"]["type"],
