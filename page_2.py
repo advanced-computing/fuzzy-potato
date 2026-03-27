@@ -104,13 +104,25 @@ def load_snapshot(max_rows: int | None = None) -> pd.DataFrame:
     """
     Load officer snapshot from BigQuery.
     """
-    df = load_table(PROJECT_ID, DATASET_NAME, TABLE_NAME)
+
+    needed_cols = list(BQ_TO_DF.keys())
+
+    df = load_table(
+        PROJECT_ID,
+        DATASET_NAME,
+        TABLE_NAME,
+        columns=needed_cols,
+        limit=max_rows,
+    )
+
     df = _process_dataframe(df)
 
-    if max_rows is not None:
-        df = df.head(max_rows).copy()
-
     return df
+
+
+@st.cache_data(show_spinner=False)
+def convert_to_csv(df: pd.DataFrame) -> bytes:
+    return df.to_csv(index=False).encode("utf-8")
 
 
 # -----------------------------
@@ -121,8 +133,8 @@ st.sidebar.header("Controls")
 max_rows_ui = st.sidebar.number_input(
     "Max rows to load (0 = all)",
     min_value=0,
-    value=0,
-    step=10000,
+    value=5000,
+    step=5000,
     help="For faster development you can limit rows.",
 )
 max_rows = None if int(max_rows_ui) == 0 else int(max_rows_ui)
@@ -161,14 +173,15 @@ st.divider()
 # -----------------------------
 # Tabs
 # -----------------------------
-tab1, tab2, tab3 = st.tabs(
-    ["RQ1 — Concentration (Lorenz/Gini)", "RQ2 — Risk Matrix (Group)", "Preview / Download"]
+section = st.sidebar.radio(
+    "Choose section",
+    ["RQ1 – Concentration (Lorenz/Gini)", "RQ2 – Risk Matrix (Group)", "Preview / Download"],
 )
 
 # -----------------------------
 # RQ1
 # -----------------------------
-with tab1:
+if section == "RQ1 – Concentration (Lorenz/Gini)":
     st.subheader("RQ1: Are complaints concentrated among a small subset of officers?")
 
     st.markdown(
@@ -204,7 +217,7 @@ with tab1:
 # -----------------------------
 # RQ2
 # -----------------------------
-with tab2:
+elif section == "RQ2 – Risk Matrix (Group)":
     st.subheader(
         "RQ2: Which groups show higher complaint burden and higher substantiation intensity?"
     )
@@ -257,9 +270,11 @@ with tab2:
 # -----------------------------
 # Preview / Download
 # -----------------------------
-with tab3:
+elif section == "Preview / Download":
     st.subheader("Preview")
-    st.dataframe(df.head(200), use_container_width=True)
+
+    with st.expander("Show data preview"):
+        st.dataframe(df.head(50), use_container_width=True)
 
     export_date = "latest"
     if "As Of Date" in df.columns and df["As Of Date"].notna().any():
@@ -267,7 +282,7 @@ with tab3:
 
     st.download_button(
         "Download loaded snapshot as CSV",
-        data=df.to_csv(index=False).encode("utf-8"),
+        data=convert_to_csv(df),
         file_name=f"ccrb_officer_snapshot_{export_date}.csv",
         mime="text/csv",
     )

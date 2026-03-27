@@ -28,9 +28,21 @@ def run_query(query: str) -> pd.DataFrame:
     return client.query(query).to_dataframe()
 
 
-def load_table(project_id: str, dataset_name: str, table_name: str) -> pd.DataFrame:
+def load_table(
+    project_id: str,
+    dataset_name: str,
+    table_name: str,
+    columns: list[str] | None = None,
+    limit: int | None = None,
+) -> pd.DataFrame:
+    selected_columns = ", ".join(columns) if columns else "*"
+
     query = f"""
-        SELECT *
+        SELECT {selected_columns}
         FROM `{project_id}.{dataset_name}.{table_name}`
     """
+
+    if limit is not None and limit > 0:
+        query += f"\nLIMIT {int(limit)}"
+
     return run_query(query)
