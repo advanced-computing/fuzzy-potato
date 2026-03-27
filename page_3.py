@@ -1,4 +1,5 @@
 # page_3.py
+import time
 from datetime import date
 
 import pandas as pd
@@ -7,6 +8,8 @@ import streamlit as st
 
 from bigquery_helpers import load_table
 from precinct_helpers import load_dataset1, misconduct_by_precinct
+
+start_time = time.time()
 
 officers_df = load_dataset1()
 misconduct_counts = misconduct_by_precinct(officers_df)
@@ -204,3 +207,6 @@ merged = crime_by_precinct.merge(
     on="precinct",
     how="inner",
 )
+
+elapsed = time.time() - start_time
+st.caption(f"Page loaded in {elapsed:.2f} seconds")
