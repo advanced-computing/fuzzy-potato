@@ -8,7 +8,7 @@ Group members: **Emily Chu, Elsie Zhang**
 This project studies patterns of police misconduct in New York City using two NYC public safety datasets.  
 We focus on three questions: whether misconduct allegations are concentrated among a small group of officers, how allegation patterns vary across NYPD commands or ranks, and whether precincts with higher crime levels also have more misconduct allegations.
 
-## Live App
+## Access our Live App! 
 
 Main app:  
 https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/
@@ -86,3 +86,28 @@ https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/page_3
 ## Repository Purpose
 
 This repository contains the code, notebook work, and Streamlit app for our Advanced Computing group project.
+
+## Data Loading Methods
+To support an interactive Streamlit application while working with large NYC Open Data datasets, we implemented a combination of BigQuery storage, selective querying, and caching strategies to improve performance and responsiveness. Instead of loading raw data directly from APIs on every app run, we first ingested the CCRB officer dataset into Google BigQuery. This allows us to execute SQL queries directly on the server side, avoid repeatedly downloading large datasets, and improve query speed and reliability. We also constructed the SQL queries to retrieve only the required columns and optionally limit the number of rows to reduce unnecessary data transfer and speeds up initial load time.
+
+## Selective Data Loading
+
+To further improve performance, we avoid loading the entire dataset by default. Users can control the number of rows loaded via a sidebar input:
+
+1. Smaller subsets are used during development and exploration
+2. Larger datasets can be loaded when needed for full analysis
+
+This approach balances flexibility with performance efficiency.
+
+We use Streamlit’s caching mechanisms to minimize repeated computation and network calls, such as Cached BigQuery Client, Cached Data Loading, and Cached Data Export. This helps us to prevents re-initializing the BigQuery client on every run and avoids repeated authentication overhead, while storing query results after our first loads. This also leads to the speed improvement of our page loadings.
+
+## UI Performance Optimization
+
+We also made several UI-level improvements:
+1. Replaced tabs with sidebar navigation to reduce unnecessary rendering
+2. Removed loading spinners once caching was implemented
+3. Limited preview tables to a fixed number of rows (head(50))
+
+These changes reduce frontend rendering time and improve perceived responsiveness.
+
+Through these optimizations, our initial load time was reduced from 8 seconds to 2 seconds and cached reruns are significantly faster. This allows our app to remain responsive even when working with large datasets.
