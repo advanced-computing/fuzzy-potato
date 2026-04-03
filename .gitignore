@@ -209,4 +209,4 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/macos,python
 
 .streamlit/secrets.toml
-service-account.json
+service-account.json.streamlit/secrets.toml
