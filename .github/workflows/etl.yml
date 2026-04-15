@@ -22,11 +22,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Write service account key to file
-        run: echo '${{ secrets.BQ_LAB13 }}' > /tmp/bq_key.json
+      - name: Write Google credentials to file
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        run: |
+          python - <<'PY'
+          import os
+          with open("/tmp/bq_key.json", "w", encoding="utf-8") as f:
+              f.write(os.environ["GOOGLE_CREDENTIALS"])
+          PY
 
       - name: Set Google credentials
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq_key.json" >> $GITHUB_ENV
+
+      - name: Validate credentials JSON
+        run: python -m json.tool /tmp/bq_key.json > /dev/null
 
       - name: Run ETL script
         run: python ingest_dataset1.py
