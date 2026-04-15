@@ -22,15 +22,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Write service account key to file
+      - name: Write Google credentials to file
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: |
-          printf '%s' '${{ secrets.GOOGLE_CREDENTIALS }}' > /tmp/bq_key.json
+          python - <<'PY'
+          import os
+          with open("/tmp/bq_key.json", "w", encoding="utf-8") as f:
+              f.write(os.environ["GOOGLE_CREDENTIALS"])
+          PY
 
-      - name: Set Google credentials
+      - name: Set Google credentials path
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq_key.json" >> $GITHUB_ENV
-
-      - name: Check credentials file exists
-        run: ls -l /tmp/bq_key.json
 
       - name: Validate credentials JSON
         run: python -m json.tool /tmp/bq_key.json > /dev/null
