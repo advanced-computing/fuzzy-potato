@@ -23,7 +23,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Write service account key to file
-        run: echo '${{ secrets.BQ_LAB13 }}' > /tmp/bq_key.json
+        run: 
+            printf '%s' '${{ secrets.GOOGLE_CREDENTIALS }}' > /tmp/bq_key.json
 
       - name: Set Google credentials
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq_key.json" >> $GITHUB_ENV
