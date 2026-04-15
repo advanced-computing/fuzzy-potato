@@ -12,7 +12,7 @@ We focus on three questions:
 2. which officer groups show the highest complaint burden and substantiation intensity,
 3. whether precincts with higher crime volume also tend to have more misconduct allegations.
 
-## Live App
+## Access our Live App! 
 
 Main app:  
 https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/
