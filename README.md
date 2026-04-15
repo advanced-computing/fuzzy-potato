@@ -6,7 +6,11 @@ Group members: **Emily Chu, Elsie Zhang**
 ## Project Overview
 
 This project studies patterns of police misconduct in New York City using two NYC public safety datasets.  
-We focus on three questions: whether misconduct allegations are concentrated among a small group of officers, how allegation patterns vary across NYPD commands or ranks, and whether precincts with higher crime levels also have more misconduct allegations.
+We focus on three questions:
+
+1. how extreme the highest-complaint officers are relative to the overall distribution,
+2. which officer groups show the highest complaint burden and substantiation intensity,
+3. whether precincts with higher crime volume also tend to have more misconduct allegations.
 
 ## Live App
 
@@ -20,69 +24,145 @@ This project uses **two** NYC Open Data datasets.
 ### 1. Civilian Complaint Review Board: Police Officers
 https://data.cityofnewyork.us/Public-Safety/Civilian-Complaint-Review-Board-Police-Officers/2fir-qns4/about_data
 
-This dataset provides officer-level information from the CCRB, including officer identifiers, rank, command, and complaint-related variables.  
-We use it to analyze how misconduct allegations are distributed across officers and how patterns differ across commands or ranks.
+This dataset provides officer-level information from the CCRB, including officer identifiers, current rank, current command, and complaint-related variables.  
+We use it for both officer-level and group-level analysis.
+
+Key variables used in this project include:
+
+- current command
+- current rank
+- total complaints
+- total substantiated complaints
+- officer demographic and status fields
 
 ### 2. NYPD Complaint Data Historic
 https://data.cityofnewyork.us/Public-Safety/NYPD-Complaint-Data-Historic/qgea-i56i/about_data
 
-This dataset contains historical NYPD complaint records.  
-We use it as a proxy for crime levels across precincts and compare those patterns with police misconduct allegations.
+This dataset contains historical NYPD complaint records related to crime incidents in New York City.  
+We use it as a precinct-level measure of crime volume and compare it with misconduct allegation patterns.
+
+Key variables used in this project include:
+
+- `addr_pct_cd` for precinct identification
+- offense description and category
+- borough
+- report date
 
 ## Research Questions
 
-1. **How concentrated are misconduct allegations across NYPD officers?**  
-   We examine whether a small share of officers accounts for a large share of allegations.
+### RQ1
+**How extreme are the highest-complaint officers relative to the overall distribution?**
 
-2. **How do misconduct risks vary across commands or ranks?**  
-   We compare officer groups to identify where allegations are more common.
+We compare the most complained-about officers with the broader complaint distribution across all officers.  
+This helps show whether the highest-complaint officers are simply above average or whether they are true outliers.
 
-3. **Are NYPD precincts with higher crime levels associated with higher numbers of police misconduct allegations?**  
-   We explore whether precincts with more crime also tend to have more misconduct allegations.
+### RQ2
+**Which groups show the highest complaint burden and substantiation intensity?**
+
+We group officers by variables such as **Current Command** or **Current Rank** and compare:
+
+- **Complaint burden** = average complaints per officer
+- **Substantiation intensity** = substantiated complaints per 100 complaints
+
+This allows us to identify which groups appear most exposed to complaints and which groups have relatively higher substantiation rates.
+
+### RQ3
+**Is crime volume associated with misconduct allegations across precincts?**
+
+We aggregate Dataset 2 into **crime counts by precinct** and compare those counts with misconduct allegation counts derived from Dataset 1.  
+This lets us examine whether precincts with more crime also tend to show more misconduct complaints.
 
 ## App Structure
 
 ### Proposal Page
-Introduces the project motivation, datasets, research questions, known unknowns, and anticipated challenges.
+Introduces the project motivation, datasets, updated research questions, analytical approach, known unknowns, and anticipated challenges.
 
-https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/proposal_page
+### Page 2 — RQ1: Complaint Extremes
+Focuses on officer-level complaint distribution.
 
-### Page 2
-Focuses on officer-level and command-level misconduct patterns, including concentration analysis and group comparisons.
-https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/page_2
+Main outputs include:
 
-### Page 3
-Focuses on the relationship between crime levels and police misconduct allegations across precincts.
+- top officers by total complaints
+- summary distribution metrics
+- distribution plots showing how extreme high-complaint officers are relative to the full officer population
 
-https://fuzzy-potato-kmst2vvnvebesjvs2b9kyh.streamlit.app/page_3
+### Page 4 — RQ2: Group Risk Patterns
+Focuses on group-level misconduct risk.
 
+Main outputs include:
+
+- a quadrant bubble chart comparing groups on burden and substantiation intensity
+- ranked chart of groups by complaint burden
+- ranked chart of groups by substantiation intensity
+
+### Page 3 — RQ3: Crime and Misconduct by Precinct
+Focuses on the precinct-level relationship between crime volume and misconduct allegations.
+
+Main outputs include:
+
+- crime counts by precinct
+- merged precinct-level comparisons between crime volume and misconduct patterns
+
+## Analytical Workflow
+
+### Dataset 1 Workflow
+1. Load officer-level complaint data from BigQuery.
+2. Clean and standardize fields such as current command, current rank, and complaint variables.
+3. Use the cleaned table for both officer-level and group-level analysis.
+
+### Dataset 2 Workflow
+1. Load the historic NYPD complaint dataset from BigQuery.
+2. Aggregate records by precinct using `addr_pct_cd`.
+3. Construct precinct-level crime count measures.
+
+### Merging Logic for RQ3
+1. Build misconduct counts by precinct from Dataset 1.
+2. Build crime counts by precinct from Dataset 2.
+3. Align the precinct identifiers and data types.
+4. Merge the two aggregated tables for precinct-level comparison.
+
+## Authentication and Secrets
+
+### Local ingestion
+For local ingestion and setup, authentication should be done with a **user account** following the course guidance for pandas-gbq / Google Cloud local authentication.
+
+### Streamlit deployment
+For the deployed Streamlit app, BigQuery access uses a **service account** stored in Streamlit secrets.
+
+Important:
+- `.streamlit/secrets.toml` must **not** be committed to GitHub
+- it should be included in `.gitignore`
 
 ## Known Unknowns
 
-### Known
-- The number of misconduct allegations helps measure variation in allegation frequency.
-- Officer rank and command information allow comparisons across organizational groups.
-- Complaint dates allow us to examine patterns over time.
+### What we know
+- Dataset 1 supports officer-level and group-level misconduct analysis.
+- Dataset 2 supports precinct-level crime aggregation.
+- Together, the datasets allow comparison across officer, group, and precinct levels.
 
-### Unknown
-- The total number of officers in each command, which limits our ability to calculate allegation rates per officer.
-- True policing activity levels by precinct or command.
-- External factors such as neighborhood characteristics, enforcement intensity, and reporting behavior.
+### What we do not know yet
+- Whether the highest-complaint officers are extreme relative to the full officer distribution.
+- Which commands or ranks consistently show the highest burden and highest substantiation intensity.
+- Whether the precinct-level relationship between crime and misconduct is strong, weak, or inconsistent.
+- How much external factors such as policing intensity, reporting behavior, or neighborhood context affect these results.
 
 ## Anticipated Challenges
 
 - **Data cleaning and standardization**  
-  Command names, officer identifiers, and other variables may have inconsistent formatting.
+  Command names, group labels, and complaint-related variables may require cleaning and alignment.
 
-- **Data aggregation and interpretation**  
-  Multiple allegations may be linked to the same complaint, so counts must be interpreted carefully.
+- **Interpretation**  
+  Complaint burden and substantiation intensity measure different things, so both need to be interpreted carefully.
 
-- **Data integration**  
-  Matching officer-level misconduct data with precinct-level complaint data requires additional cleaning and alignment.
+- **Precinct matching**  
+  Precinct identifiers differ across datasets and must be aligned before merging.
+
+- **Measurement bias**  
+  Higher police activity or higher reporting rates may mechanically increase complaint counts.
 
 - **Performance**  
-  Large datasets may slow down loading and filtering in the dashboard.
+  Large datasets can slow down loading, filtering, and visualization if not handled efficiently.
 
 ## Repository Purpose
 
-This repository contains the code, notebook work, and Streamlit app for our Advanced Computing group project.
+This repository contains the Streamlit app, ingestion scripts, helper functions, and project materials for our Advanced Computing group project.
