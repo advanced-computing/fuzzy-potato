@@ -23,11 +23,17 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Write service account key to file
-        run: 
-            printf '%s' '${{ secrets.GOOGLE_CREDENTIALS }}' > /tmp/bq_key.json
+        run: |
+          printf '%s' '${{ secrets.GOOGLE_CREDENTIALS }}' > /tmp/bq_key.json
 
       - name: Set Google credentials
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq_key.json" >> $GITHUB_ENV
+
+      - name: Check credentials file exists
+        run: ls -l /tmp/bq_key.json
+
+      - name: Validate credentials JSON
+        run: python -m json.tool /tmp/bq_key.json > /dev/null
 
       - name: Run ETL script
         run: python ingest_dataset1.py
