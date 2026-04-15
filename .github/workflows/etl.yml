@@ -1,0 +1,32 @@
+name: Run ETL
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  etl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write service account key to file
+        run: echo '${{ secrets.BQ_LAB13 }}' > /tmp/bq_key.json
+
+      - name: Set Google credentials
+        run: echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq_key.json" >> $GITHUB_ENV
+
+      - name: Run ETL script
+        run: python ingest_dataset1.py
