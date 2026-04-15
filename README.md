@@ -166,3 +166,14 @@ Important:
 ## Repository Purpose
 
 This repository contains the Streamlit app, ingestion scripts, helper functions, and project materials for our Advanced Computing group project.
+
+## BigQuery Authentication
+
+This project uses Google BigQuery in two contexts:
+
+### Local ingestion
+The scripts `ingest_dataset1.py` and `ingest_dataset2.py` upload data to BigQuery using a Google Cloud service account.  
+For local runs, authentication is provided through:
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS="/Users/elsiezhang/Downloads/fuzzy-potato-491318-52c0aaab0477.json"

@@ -1,6 +1,16 @@
+import os
+
 import pandas as pd
 import requests
+from google.oauth2 import service_account
 from pandas_gbq import to_gbq
+
+
+def get_gbq_credentials():
+    return service_account.Credentials.from_service_account_file(
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+    )
+
 
 PROJECT_ID = "fuzzy-potato-491318"
 DATASET_ID = "Project_Part5"
@@ -45,10 +55,13 @@ def clean_data(df):
 
 
 def write_to_bigquery(df):
+    credentials = get_gbq_credentials()
+
     to_gbq(
         dataframe=df,
         destination_table=FULL_TABLE_ID,
         project_id=PROJECT_ID,
+        credentials=credentials,
         if_exists="replace",
     )
 
