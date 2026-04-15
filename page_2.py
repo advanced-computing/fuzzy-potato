@@ -1,36 +1,25 @@
-# page_2.py
-# CCRB Officer Snapshot (2fir-qns4)
-# RQ1: Concentration (Lorenz + Gini)
-# RQ2: Risk Matrix (Group by Current Command / Current Rank)
-
 from __future__ import annotations
 
 import time
 
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
-from bigquery_helpers import load_table  # type: ignore
-from utils import (
-    compute_group_stats,
-    plot_lorenz_curves,
-    plot_risk_matrix,
-)
+from bigquery_helpers import load_table
 
 start_time = time.time()
-# -----------------------------
-# Page config + title
-# -----------------------------
-st.set_page_config(page_title="CCRB Officer Snapshot | RQ1 & RQ2", layout="wide")
-st.title("CCRB Officer Snapshot: RQ1 Concentration & RQ2 Risk Matrix")
+
+st.set_page_config(page_title="RQ1 | Complaint Extremes", layout="wide")
+st.title(
+    "RQ1: How extreme are the highest-complaint officers relative to the overall distribution?"
+)
 st.caption(
-    "NYC Open Data (CCRB) officer-level snapshot. "
-    "RQ1 examines concentration across officers; RQ2 compares group-level risk patterns."
+    "This page compares the highest-complaint officers with the overall distribution "
+    "of complaints across all officers."
 )
 
-# -----------------------------
-# BigQuery config
-# -----------------------------
 PROJECT_ID = "fuzzy-potato-491318"
 DATASET_NAME = "Project_Part5"
 TABLE_NAME = "officers"
@@ -38,13 +27,8 @@ TABLE_NAME = "officers"
 BQ_TO_DF: dict[str, str] = {
     "as_of_date": "As Of Date",
     "tax_id": "Tax ID",
-    "active_per_last_reported_status": "Active Per Last Reported Status",
-    "last_reported_active_date": "Last Reported Active Date",
     "officer_first_name": "Officer First Name",
     "officer_last_name": "Officer Last Name",
-    "officer_race": "Officer Race",
-    "officer_gender": "Officer Gender",
-    "current_rank_abbreviation": "Current Rank Abbreviation",
     "current_rank": "Current Rank",
     "current_command": "Current Command",
     "shield_no": "Shield No",
@@ -59,52 +43,41 @@ NUMERIC_COLS = [
     "Total Substantiated Complaints",
 ]
 
-DATE_COLS = [
-    "As Of Date",
-    "Last Reported Active Date",
-]
+DATE_COLS = ["As Of Date"]
 
 
-def _process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """Process and clean the dataframe loaded from BigQuery."""
+def _process_dataframe(df: pd.DataFrame) -> pd.DataFrame:  # noqa: C901
     if df.empty:
         return pd.DataFrame(columns=list(BQ_TO_DF.values()))
 
-    # rename to the display column names used by the rest of the page
     df = df.rename(columns=BQ_TO_DF)
-
-    # keep only expected columns that actually exist
     df = df[[c for c in BQ_TO_DF.values() if c in df.columns]].copy()
 
-    # numeric conversions
     for col in NUMERIC_COLS:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # keep complaint counts as ints for downstream summaries
     for col in ["Total Complaints", "Total Substantiated Complaints"]:
         if col in df.columns:
             df[col] = df[col].fillna(0).astype(int)
 
-    # dates
     for col in DATE_COLS:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce")
 
-    # friendly categorical fills
-    for col in ["Current Command", "Current Rank", "Officer Race", "Officer Gender"]:
+    for col in ["Current Command", "Current Rank"]:
         if col in df.columns:
             df[col] = df[col].fillna("Unknown")
+
+    for col in ["Officer First Name", "Officer Last Name"]:
+        if col in df.columns:
+            df[col] = df[col].fillna("")
 
     return df
 
 
 @st.cache_data(show_spinner=False)
 def load_snapshot(max_rows: int | None = None) -> pd.DataFrame:
-    """
-    Load officer snapshot from BigQuery.
-    """
-
     needed_cols = list(BQ_TO_DF.keys())
 
     df = load_table(
@@ -115,42 +88,51 @@ def load_snapshot(max_rows: int | None = None) -> pd.DataFrame:
         limit=max_rows,
     )
 
-    df = _process_dataframe(df)
-
-    return df
+    return _process_dataframe(df)
 
 
-@st.cache_data(show_spinner=False)
-def convert_to_csv(df: pd.DataFrame) -> bytes:
-    return df.to_csv(index=False).encode("utf-8")
+def build_officer_label(df: pd.DataFrame) -> pd.Series:
+    if "Shield No" in df.columns:
+        shield = df["Shield No"].fillna(-1).astype(int).astype(str)
+    else:
+        shield = pd.Series(["Unknown"] * len(df), index=df.index)
+
+    if "Officer Last Name" in df.columns:
+        last_name = df["Officer Last Name"].replace("", "Unknown")
+    else:
+        last_name = pd.Series(["Unknown"] * len(df), index=df.index)
+
+    return "Shield " + shield + " - " + last_name
 
 
-@st.cache_data(show_spinner=False)
-def cached_group_stats(df: pd.DataFrame, group_col: str, min_officers: int):
-    return compute_group_stats(df, group_col=group_col, min_officers=min_officers)
+def prepare_ranked_data(df: pd.DataFrame) -> pd.DataFrame:
+    work = df.copy()
+    work = work.sort_values("Total Complaints", ascending=False).reset_index(drop=True)
+    work["Officer Label"] = build_officer_label(work)
+    return work
 
 
-# -----------------------------
-# Sidebar
-# -----------------------------
 st.sidebar.header("Controls")
 
 max_rows_ui = st.sidebar.number_input(
     "Max rows to load (0 = all)",
     min_value=0,
-    value=5000,
+    value=0,
     step=5000,
-    help="For faster development you can limit rows.",
 )
 max_rows = None if int(max_rows_ui) == 0 else int(max_rows_ui)
+
+top_n = st.sidebar.slider(
+    "Show top N officers",
+    min_value=10,
+    max_value=50,
+    value=20,
+    step=5,
+)
 
 if st.sidebar.button("Clear cache"):
     st.cache_data.clear()
     st.sidebar.success("Cache cleared. Rerun.")
-
-# -----------------------------
-# Load data
-# -----------------------------
 
 df = load_snapshot(max_rows=max_rows)
 
@@ -158,139 +140,178 @@ if df.empty:
     st.error("No data returned from BigQuery.")
     st.stop()
 
-# Summary metrics
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Officers (rows)", f"{len(df):,}")
-m2.metric("Total complaints (sum)", f"{int(df['Total Complaints'].sum()):,}")
-m3.metric(
-    "Total substantiated (sum)",
-    f"{int(df['Total Substantiated Complaints'].sum()):,}",
-)
+m2.metric("Total complaints", f"{int(df['Total Complaints'].sum()):,}")
+m3.metric("Total substantiated", f"{int(df['Total Substantiated Complaints'].sum()):,}")
 
 as_of_str = "Unknown"
 if "As Of Date" in df.columns and df["As Of Date"].notna().any():
     as_of_str = str(df["As Of Date"].dropna().max().date())
-
 m4.metric("Latest As Of Date", as_of_str)
 
 st.divider()
 
+ranked_df = prepare_ranked_data(df)
+bar_df = ranked_df.head(top_n).copy()
+
 # -----------------------------
-# Tabs
+# Figure A: Top officers
 # -----------------------------
-section = st.sidebar.radio(
-    "Choose section",
-    ["RQ1 – Concentration (Lorenz/Gini)", "RQ2 – Risk Matrix (Group)", "Preview / Download"],
+st.markdown("### Figure A. Top officers by total complaints")
+st.markdown(
+    "This bar chart highlights the officers with the highest complaint counts. "
+    "It shows the scale of the most complained-about officers directly."
 )
 
-# -----------------------------
-# RQ1
-# -----------------------------
-if section == "RQ1 – Concentration (Lorenz/Gini)":
-    st.subheader("RQ1: Are complaints concentrated among a small subset of officers?")
+fig_bar = px.bar(
+    bar_df,
+    x="Officer Label",
+    y="Total Complaints",
+    title=f"Top {top_n} Officers by Total Complaints",
+    hover_data={
+        "Current Command": True,
+        "Current Rank": True,
+        "Total Substantiated Complaints": True,
+    },
+)
 
-    st.markdown(
-        "This plot compares how **Total Complaints** and "
-        "**Total Substantiated Complaints** are distributed across officers. "
-        "If the curve bows far below the equality line, outcomes are "
-        "concentrated among fewer officers."
-    )
+fig_bar.update_layout(
+    xaxis_title="Officer",
+    yaxis_title="Total Complaints",
+    xaxis_tickangle=-35,
+)
 
-    rq1_as_of_str = None
-    if "As Of Date" in df.columns and df["As Of Date"].notna().any():
-        rq1_as_of_str = str(df["As Of Date"].dropna().max().date())
-
-    fig, ax, summary = plot_lorenz_curves(
-        total_values=df["Total Complaints"].values,
-        subst_values=df["Total Substantiated Complaints"].tolist(),
-        as_of_date=rq1_as_of_str,
-    )
-    st.pyplot(fig, clear_figure=True)
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Gini (Total)", f"{summary['gini_total']:.3f}")
-    c2.metric("Gini (Substantiated)", f"{summary['gini_subst']:.3f}")
-    c3.metric("Top 1% share (Total)", f"{summary['top_1pct_share_total'] * 100:.1f}%")
-    c4.metric("Top 5% share (Total)", f"{summary['top_5pct_share_total'] * 100:.1f}%")
-
-    st.caption(
-        "Interpretation: Higher Gini means greater concentration. "
-        "Top 1%/5% shares show how much of total complaints come from the "
-        "most-complained-about officers."
-    )
+st.plotly_chart(fig_bar, use_container_width=True)
 
 # -----------------------------
-# RQ2
+# Figure B: Distribution by complaint bucket
 # -----------------------------
-elif section == "RQ2 – Risk Matrix (Group)":
-    st.subheader(
-        "RQ2: Which groups show higher complaint burden and higher substantiation intensity?"
+
+st.markdown("### Figure B. Distribution of officers by complaint level")
+st.markdown(
+    "This chart groups officers into complaint-count buckets. "
+    "It shows that most officers are concentrated in the lowest complaint ranges, "
+    "while only a small number fall into the high-complaint tail."
+)
+
+bucket_df = df.copy()
+
+# 手动分桶
+bucket_df["Complaint Bucket"] = "11+"
+bucket_df.loc[bucket_df["Total Complaints"] == 0, "Complaint Bucket"] = "0"
+bucket_df.loc[bucket_df["Total Complaints"] == 1, "Complaint Bucket"] = "1"
+bucket_df.loc[bucket_df["Total Complaints"].between(2, 3), "Complaint Bucket"] = "2–3"
+bucket_df.loc[bucket_df["Total Complaints"].between(4, 5), "Complaint Bucket"] = "4–5"
+bucket_df.loc[bucket_df["Total Complaints"].between(6, 10), "Complaint Bucket"] = "6–10"
+
+bucket_order = ["0", "1", "2–3", "4–5", "6–10", "11+"]
+
+bucket_counts = (
+    bucket_df.groupby("Complaint Bucket")
+    .size()
+    .reindex(bucket_order, fill_value=0)
+    .reset_index(name="Number of Officers")
+)
+
+st.dataframe(bucket_counts, use_container_width=True, hide_index=True)
+
+bucket_counts["Share of Officers (%)"] = (
+    bucket_counts["Number of Officers"] / bucket_counts["Number of Officers"].sum() * 100
+).round(1)
+
+fig_bucket = go.Figure()
+
+fig_bucket.add_trace(
+    go.Bar(
+        x=bucket_counts["Share of Officers (%)"].tolist(),
+        y=bucket_counts["Complaint Bucket"].astype(str).tolist(),
+        orientation="h",
+        text=[f"{v:.1f}%" for v in bucket_counts["Share of Officers (%)"]],
+        textposition="outside",
+        name="Share of Officers",
     )
+)
 
-    st.markdown(
-        "**Risk Matrix definition**\n"
-        "- **X** = average complaints per officer in the group (burden)\n"
-        "- **Y** = substantiated per 100 complaints (intensity)\n"
-        "- **Bubble size** = number of officers in the group\n"
-        "\n"
-        "Choose whether groups are defined by **Current Command** or **Current Rank**."
-    )
+fig_bucket.update_layout(
+    title="Share of Officers by Complaint Count Bucket",
+    xaxis_title="Share of Officers (%)",
+    yaxis_title="Complaint Count Bucket",
+    showlegend=False,
+    margin=dict(l=80, r=40, t=60, b=40),
+)
 
-    left, right = st.columns([1, 2], gap="large")
+fig_bucket.update_yaxes(
+    type="category",
+    categoryorder="array",
+    categoryarray=bucket_order[::-1],
+)
 
-    with left:
-        group_col = st.selectbox("Group by", ["Current Command", "Current Rank"], index=0)
-        min_officers = st.slider("Minimum officers per group", 50, 1000, 200, step=50)
-        annotate_n = st.slider("Annotate top-N (by avg complaints)", 0, 20, 0, step=1)
-
-    group_stats = cached_group_stats(
-        df,
-        group_col=group_col,
-        min_officers=int(min_officers),
-    )
-
-    if group_stats.table.empty:
-        st.warning("No groups remain after filtering. Lower 'Minimum officers per group'.")
-    else:
-        fig2, ax2 = plot_risk_matrix(
-            group_stats,
-            title=f"Risk Matrix (Grouped by {group_col}) — Snapshot",
-            annotate_top_n=int(annotate_n),
-        )
-        st.pyplot(fig2, clear_figure=True)
-
-        st.markdown("### Group table")
-        st.dataframe(
-            group_stats.table.sort_values("avg_complaints_per_officer", ascending=False),
-            use_container_width=True,
-        )
-
-        st.download_button(
-            "Download group stats as CSV",
-            data=group_stats.table.to_csv(index=False).encode("utf-8"),
-            file_name=f"rq2_group_stats_{group_col.replace(' ', '_').lower()}.csv",
-            mime="text/csv",
-        )
+st.plotly_chart(fig_bucket, use_container_width=True)
 
 # -----------------------------
-# Preview / Download
+# Summary table
 # -----------------------------
-elif section == "Preview / Download":
-    st.subheader("Preview")
+q1 = df["Total Complaints"].quantile(0.25)
+q3 = df["Total Complaints"].quantile(0.75)
+iqr = q3 - q1
+upper_fence = q3 + 1.5 * iqr
+outlier_share = (df["Total Complaints"] > upper_fence).mean() * 100
 
-    with st.expander("Show data preview"):
-        st.dataframe(df.head(50), use_container_width=True)
+summary_table = pd.DataFrame(
+    [
+        {"Metric": "Mean complaints per officer", "Value": f"{df['Total Complaints'].mean():.2f}"},
+        {
+            "Metric": "Median complaints per officer",
+            "Value": f"{df['Total Complaints'].median():.2f}",
+        },
+        {"Metric": "75th percentile", "Value": f"{q3:.2f}"},
+        {"Metric": "Maximum complaints", "Value": f"{df['Total Complaints'].max():.0f}"},
+        {
+            "Metric": "Officers with zero complaints",
+            "Value": f"{(df['Total Complaints'] == 0).mean() * 100:.1f}%",
+        },
+        {"Metric": "Share above box-plot outlier threshold", "Value": f"{outlier_share:.1f}%"},
+    ]
+)
 
-    export_date = "latest"
-    if "As Of Date" in df.columns and df["As Of Date"].notna().any():
-        export_date = str(df["As Of Date"].dropna().max().date())
+st.markdown("### Distribution Summary")
+st.dataframe(summary_table, use_container_width=True, hide_index=True)
 
-    st.download_button(
-        "Download loaded snapshot as CSV",
-        data=convert_to_csv(df),
-        file_name=f"ccrb_officer_snapshot_{export_date}.csv",
-        mime="text/csv",
-    )
+# -----------------------------
+# Top officers table
+# -----------------------------
+top_table = bar_df[
+    [
+        c
+        for c in [
+            "Officer Label",
+            "Current Command",
+            "Current Rank",
+            "Total Complaints",
+            "Total Substantiated Complaints",
+        ]
+        if c in bar_df.columns
+    ]
+].copy()
+
+st.markdown(f"### Top {top_n} Officers Table")
+st.dataframe(top_table, use_container_width=True, hide_index=True)
+
+# -----------------------------
+# Interpretation
+# -----------------------------
+median_val = df["Total Complaints"].median()
+max_val = df["Total Complaints"].max()
+zero_share = (df["Total Complaints"] == 0).mean() * 100
+
+st.markdown("### Key takeaway")
+st.write(
+    f"The distribution is highly uneven: the median officer has {median_val:.0f} complaints, "
+    f"{zero_share:.1f}% of officers have zero complaints, while the highest observed value is "
+    f"{max_val:.0f}. This suggests that the most complained-about officers are extreme relative "
+    f"to the overall distribution rather than representative of the typical officer."
+)
 
 elapsed = time.time() - start_time
 st.caption(f"Page loaded in {elapsed:.2f} seconds")
