@@ -13,8 +13,7 @@ start_time = time.time()
 
 st.set_page_config(page_title="RQ1 | Complaint Extremes", layout="wide")
 st.title(
-    "RQ1: How extreme are the highest-complaint officers "
-    "relative to the overall distribution?"
+    "RQ1: How extreme are the highest-complaint officers relative to the overall distribution?"
 )
 st.caption(
     "This page compares the highest-complaint officers with the overall distribution "
@@ -270,7 +269,7 @@ summary_table = pd.DataFrame(
         {"Metric": "Maximum complaints", "Value": f"{df['Total Complaints'].max():.0f}"},
         {
             "Metric": "Officers with zero complaints",
-            "Value": f"{(df['Total Complaints'] == 0).mean() * 100:.1f}%"
+            "Value": f"{(df['Total Complaints'] == 0).mean() * 100:.1f}%",
         },
         {"Metric": "Share above box-plot outlier threshold", "Value": f"{outlier_share:.1f}%"},
     ]
