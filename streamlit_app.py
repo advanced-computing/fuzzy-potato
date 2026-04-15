@@ -4,14 +4,11 @@
 
 import streamlit as st
 
-# Define the pages
-main_page = st.Page("main_page.py", title="Team: Emily Chu, Elsie Zhang", icon="🎈")
+main_page = st.Page("main_page.py", title="Home", icon="🎈")
 proposal_page = st.Page("proposal_page.py", title="Project Proposal", icon="📄")
-page_2 = st.Page("page_2.py", title="Dataset 1: NYC OpenData – Allegations Over Time", icon="❄️")
-page_3 = st.Page("page_3.py", title="Dataset 2: NYPD Complaint Data Historic", icon="🎉")
+page_2 = st.Page("page_2.py", title="RQ1: Officer Complaint Distribution", icon="📊")
+page_4 = st.Page("page_4.py", title="RQ2: Group Risk Patterns", icon="🧩")
+page_3 = st.Page("page_3.py", title="RQ3: Precinct Crime and Misconduct", icon="🎉")
 
-# Set up navigation
-pg = st.navigation([main_page, proposal_page, page_2, page_3])
-
-# Run the selected page
+pg = st.navigation([main_page, proposal_page, page_2, page_4, page_3])
 pg.run()
