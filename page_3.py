@@ -5,11 +5,21 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from precinct_helpers import load_dataset1, misconduct_by_precinct
 from bigquery_helpers import run_query
+
 
 start_time = time.time()
 
-st.markdown("# RQ3: Is crime volume associated with misconduct allegations across precincts?")
+st.markdown(
+    "# RQ3: Is the number of crime incidents associated with misconduct allegations across precincts?"
+)
+st.write(
+    "This page compares crime volume from the NYPD Complaint Data Historic dataset "
+    "with misconduct allegations from the CCRB officer dataset at the precinct level. "
+    "The goal is to explore whether precincts with more recorded crime also tend to have "
+    "more misconduct allegations."
+)
 st.sidebar.markdown("# Dataset 2: NYPD Complaint Data Historic")
 
 PROJECT_ID = "fuzzy-potato-491318"
@@ -58,11 +68,6 @@ def fetch_preview_rows() -> pd.DataFrame:
     return run_query(query)
 
 
-st.write(
-    "This page pulls aggregated results from BigQuery and shows a bar "
-    "chart of crime counts by precinct."
-)
-
 st.sidebar.subheader("Filters (optional)")
 
 boro = st.sidebar.selectbox(
@@ -85,9 +90,17 @@ with st.spinner("Loading aggregated crime counts from BigQuery..."):
         boro=None if boro == "All" else boro,
         law_cat=None if law_cat == "All" else law_cat,
     )
+# --- LOAD MISCONDUCT DATA ---
+officers_df = load_dataset1()
+misconduct_counts = misconduct_by_precinct(officers_df)
+misconduct_counts = misconduct_counts.rename(
+    columns={
+        "precinct": "precinct_raw",
+        "allegation_count": "misconduct_count",
+    }
+)
 
-st.subheader("Debug: query result preview")
-st.write(crime_by_precinct)
+misconduct_counts["precinct_raw"] = misconduct_counts["precinct_raw"].astype(str).str.strip()
 
 if crime_by_precinct.empty:
     st.error("Still no results from BigQuery.")
@@ -97,23 +110,66 @@ if crime_by_precinct.empty:
     st.caption(f"Page loaded in {elapsed:.2f} seconds")
     st.stop()
 
+with st.expander("View crime count query result"):
+    st.dataframe(crime_by_precinct, use_container_width=True)
+
 crime_by_precinct["precinct_raw"] = crime_by_precinct["precinct_raw"].astype(str).str.strip()
 crime_by_precinct = crime_by_precinct[crime_by_precinct["precinct_raw"] != ""]
 
 crime_by_precinct["Precinct Name"] = "Precinct " + crime_by_precinct["precinct_raw"]
 
+# --- MERGE DATA HERE ---
+merged_df = crime_by_precinct.merge(misconduct_counts, on="precinct_raw", how="inner")
+merged_df["Precinct Name"] = "Precinct " + merged_df["precinct_raw"]
+
+if merged_df.empty:
+    st.error("No matching precincts found between crime data and misconduct data.")
+    st.stop()
+# --- Summary metrics (ADD HERE) ---
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Precincts matched", len(merged_df))
+col2.metric("Total crime records", f"{merged_df['crime_count'].sum():,}")
+col3.metric("Total misconduct allegations", f"{merged_df['misconduct_count'].sum():,}")
+
 fig = px.bar(
     crime_by_precinct,
     x="Precinct Name",
     y="crime_count",
-    title="Crime Count by Precinct",
+    title="Number of Crime Incidents by Precinct",
 )
 
-fig.update_layout(xaxis_title="Precinct", yaxis_title="Crime Count")
+fig_scatter = px.scatter(
+    merged_df,
+    x="crime_count",
+    y="misconduct_count",
+    hover_name="Precinct Name",
+    size="misconduct_count",
+    title="Number of Crime Incidents vs Misconduct Allegations",
+    labels={
+        "crime_count": "Number of Crime Incidents",
+        "misconduct_count": "Misconduct Allegations",
+    },
+)
+
+# Scatterplot (answers RQ3)
+st.subheader("Number of Crime Incidents vs Misconduct Relationship")
+st.plotly_chart(fig_scatter, use_container_width=True)
+
+corr = merged_df["crime_count"].corr(merged_df["misconduct_count"])
+
+st.info(
+    f"The correlation between the number of crime incidents and misconduct allegations is **{corr:.2f}**. "
+    "A higher value suggests that precincts with more recorded incidents tend to also have more misconduct allegations. "
+    "A value closer to 0 suggests little to no relationship between incidents and misconduct."
+)
+
+# Bar chart (supporting context)
+st.subheader("Crime Count Ranking")
 st.plotly_chart(fig, use_container_width=True)
 
 st.subheader("Preview")
-st.write(crime_by_precinct.head())
+st.dataframe(merged_df.head(), use_container_width=True)
 
 elapsed = time.time() - start_time
 st.caption(f"Page loaded in {elapsed:.2f} seconds")
