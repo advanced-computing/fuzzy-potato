@@ -9,7 +9,7 @@ from bigquery_helpers import run_query
 
 start_time = time.time()
 
-st.markdown("# Dataset 2: NYPD Complaint Data Historic")
+st.markdown("# RQ3: Is crime volume associated with misconduct allegations across precincts?")
 st.sidebar.markdown("# Dataset 2: NYPD Complaint Data Historic")
 
 PROJECT_ID = "fuzzy-potato-491318"
