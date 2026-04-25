@@ -32,7 +32,7 @@ jobs:
               f.write(os.environ["GOOGLE_CREDENTIALS"])
           PY
 
-      - name: Set Google credentials
+      - name: Set Google credentials path
         run: echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/bq_key.json" >> $GITHUB_ENV
 
       - name: Validate credentials JSON
