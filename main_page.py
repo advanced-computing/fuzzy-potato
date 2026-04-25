@@ -11,8 +11,9 @@ st.markdown("## 📖 Project Overview")
 
 st.write(
     "This project explores patterns in police misconduct across New York City using public data. "
-    "We investigate how complaints are distributed across officers, which groups show higher complaint burden, "
-    "and whether misconduct allegations are associated with the number of recorded crime incidents across precincts."
+    "We investigate how complaints are distributed across officers, which groups show higher "
+    "complaint burden, and whether misconduct allegations are associated with the number of "
+    "recorded crime incidents across precincts."
 )
 
 st.divider()
@@ -67,7 +68,7 @@ st.divider()
 st.markdown("## ℹ️ How to Use This Dashboard")
 
 st.write("""
-- Use the buttons above or sidebar to navigate between research questions  
-- Each page includes interactive filters and visualizations  
-- Hover over charts to explore detailed data  
+- Use the buttons above or sidebar to navigate between research questions
+- Each page includes interactive filters and visualizations
+- Hover over charts to explore detailed data
 """)
