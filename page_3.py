@@ -176,3 +176,6 @@ st.dataframe(merged_df.head(), use_container_width=True)
 
 elapsed = time.time() - start_time
 st.caption(f"Page loaded in {elapsed:.2f} seconds")
+
+if st.button("Back to Homepage"):
+    st.switch_page("main_page.py")
