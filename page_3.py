@@ -5,14 +5,14 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from precinct_helpers import load_dataset1, misconduct_by_precinct
 from bigquery_helpers import run_query
-
+from precinct_helpers import load_dataset1, misconduct_by_precinct
 
 start_time = time.time()
 
 st.markdown(
-    "# RQ3: Is the number of crime incidents associated with misconduct allegations across precincts?"
+    "# RQ3: Is the number of crime incidents associated with "
+    "misconduct allegations across precincts?"
 )
 st.write(
     "This page compares crime volume from the NYPD Complaint Data Historic dataset "
@@ -159,9 +159,12 @@ st.plotly_chart(fig_scatter, use_container_width=True)
 corr = merged_df["crime_count"].corr(merged_df["misconduct_count"])
 
 st.info(
-    f"The correlation between the number of crime incidents and misconduct allegations is **{corr:.2f}**. "
-    "A higher value suggests that precincts with more recorded incidents tend to also have more misconduct allegations. "
-    "A value closer to 0 suggests little to no relationship between incidents and misconduct."
+    f"The correlation between the number of crime incidents and misconduct "
+    f"allegations is **{corr:.2f}**. "
+    "This suggests there is little to no relationship between crime levels "
+    "and misconduct across precincts. "
+    "In other words, higher-crime precincts do not necessarily experience "
+    "more misconduct allegations."
 )
 
 # Bar chart (supporting context)
