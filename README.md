@@ -67,7 +67,7 @@ We group officers by variables such as **Current Command** or **Current Rank** a
 This allows us to identify which groups appear most exposed to complaints and which groups have relatively higher substantiation rates.
 
 ### RQ3
-**Is crime volume associated with misconduct allegations across precincts?**
+**Is the number of crime incidents associated with misconduct allegations across precincts?**
 
 We aggregate Dataset 2 into **crime counts by precinct** and compare those counts with misconduct allegation counts derived from Dataset 1.  
 This lets us examine whether precincts with more crime also tend to show more misconduct complaints.
