@@ -10,9 +10,10 @@ st.divider()
 st.markdown("## 📖 Project Overview")
 
 st.write(
-    "This project explores patterns in police misconduct across New York City using public data. "
-    "We investigate how complaints are distributed across officers, which groups show higher "
-    "complaint burden, and whether misconduct allegations are associated with the number of "
+    "This project explores patterns in police misconduct across New York City "
+    "using public data. We focus on three key questions to understand how "
+    "complaints are distributed, which groups show higher complaint burden, "
+    "and whether misconduct allegations are associated with the number of "
     "recorded crime incidents across precincts."
 )
 

@@ -159,11 +159,12 @@ st.plotly_chart(fig_scatter, use_container_width=True)
 corr = merged_df["crime_count"].corr(merged_df["misconduct_count"])
 
 st.info(
-    f"The correlation between the number of crime incidents and misconduct allegations "
-    f"is **{corr:.2f}**. "
-    "A higher value suggests that precincts with more recorded incidents tend to also have "
-    "more misconduct allegations. "
-    "A value closer to 0 suggests little to no relationship between incidents and misconduct."
+    f"The correlation between the number of crime incidents and misconduct "
+    f"allegations is **{corr:.2f}**. "
+    "This suggests there is little to no relationship between crime levels "
+    "and misconduct across precincts. "
+    "In other words, higher-crime precincts do not necessarily experience "
+    "more misconduct allegations."
 )
 
 # Bar chart (supporting context)
