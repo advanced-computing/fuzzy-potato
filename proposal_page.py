@@ -68,7 +68,7 @@ How extreme are the highest-complaint officers relative to the overall distribut
 Which groups show the highest complaint burden and substantiation intensity?
 
 **RQ3**
-Is crime volume associated with misconduct allegations across precincts?
+Is the number of crime incidents associated with misconduct allegations across precincts?
 """)
 
 # ----------------------------------------------------
